@@ -3,10 +3,10 @@ spring:
     name: order-service
 
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:5432/orderflow?currentSchema=orders
+    url: jdbc:postgresql://localhost:5432/orderflow?currentSchema=orders
     username: orderflow
     password: orderflow
-
+    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
       ddl-auto: validate

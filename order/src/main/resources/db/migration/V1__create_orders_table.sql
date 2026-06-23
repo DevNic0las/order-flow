@@ -1,6 +1,6 @@
 CREATE SCHEMA IF NOT EXISTS orders;
 
-CREATE TABLE orders.orders
+CREATE TABLE orders.tb_orders
 (
     id            BIGSERIAL PRIMARY KEY,
     customer_name VARCHAR(255) NOT NULL,
@@ -11,4 +11,4 @@ CREATE TABLE orders.orders
     updated_at    TIMESTAMP    NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_orders_status ON orders.orders (status);
+CREATE INDEX idx_orders_status ON orders.tb_orders (status);
