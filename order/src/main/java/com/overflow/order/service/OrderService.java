@@ -3,6 +3,7 @@ package com.overflow.order.service;
 import com.overflow.order.domain.Order;
 import com.overflow.order.dtos.OrderRequestDto;
 import com.overflow.order.dtos.OrderResponseDto;
+import com.overflow.order.exception.OrderNotFoundException;
 import com.overflow.order.messaging.OrderPublisher;
 import com.overflow.order.repository.OrderRepository;
 import com.overflow.order.service.mapper.OrderMapper;
@@ -29,8 +30,22 @@ public class OrderService {
     order.setProductId(orderRequestDto.productId());
     order.setQuantity(orderRequestDto.quantity());
 
-    orderPublisher.publishOrder(orderMapper.toOrderEventDto(order));
+    Order savedOrder = orderRepository.save(order);
 
-    return orderMapper.toResponseDto(orderRepository.save(order));
+    orderPublisher.publishOrder(orderMapper.toOrderEventDto(savedOrder));
+
+    return orderMapper.toResponseDto(savedOrder);
+  }
+  public void confirmOrder(Long orderId){
+    log.info("Confirming order with orderId={}", orderId);
+    Order order = orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException("Order not found"));
+    order.confirmed();
+    orderRepository.save(order);
+  }
+  public void rejectOrder(Long orderId){
+    log.info("Rejecting order with orderId={}", orderId);
+    Order order = orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException("Order not found"));
+    order.reject();
+    orderRepository.save(order);
   }
 }
