@@ -90,8 +90,8 @@ public class RabbitMq {
   @Bean
   public Binding notificationBinding() {
     return BindingBuilder.bind(notificationQueue())
-            .to(orderExchange())
-            .with(RK_NOTIFICATION);
+            .to(orderResultExchange());
+
   }
 
   @Bean
