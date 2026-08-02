@@ -26,3 +26,4 @@ spring:
     port: 5672
     username: guest
     password: guest
+    connection-timeout: 5000

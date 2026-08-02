@@ -1,6 +1,8 @@
 package com.overflow.inventory.service;
 
 import com.overflow.inventory.domain.Inventory;
+import com.overflow.inventory.dto.InventoryEventDto;
+import com.overflow.inventory.dto.InventoryResultEventDto;
 import com.overflow.inventory.messaging.InventoryPublisher;
 import com.overflow.inventory.repository.InventoryRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,10 +15,9 @@ import org.springframework.stereotype.Service;
 public class InventoryService
 {
   private final InventoryRepository inventoryRepository;
-  private final Inventory inventory;
   private final InventoryPublisher inventoryPublisher;
 
-  public void decreaseProductStock(Long productId, Integer quantity) {
+  public void decreaseProductStock(Long orderId, Long productId, Integer quantity) {
     log.info("Decreasing stock for productId={} by quantity={}", productId, quantity);
 
     Inventory inventory = inventoryRepository.findById(productId)
@@ -24,7 +25,13 @@ public class InventoryService
     inventory.withdraw(quantity);
 
     inventoryRepository.save(inventory);
-
+    
+    InventoryEventDto event = new InventoryEventDto(
+      orderId,
+      productId,
+      quantity
+    );
+    inventoryPublisher.publishInventoryResult(event);
 
     log.info("Stock decreased for productId={} by quantity={}", productId, quantity);
 

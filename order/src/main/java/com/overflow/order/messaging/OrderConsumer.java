@@ -2,7 +2,6 @@ package com.overflow.order.messaging;
 
 
 import com.overflow.order.config.RabbitMq;
-import com.overflow.order.dtos.OrderEventDto;
 import com.overflow.order.dtos.OrderResultEventDto;
 import com.overflow.order.service.OrderService;
 import lombok.RequiredArgsConstructor;
