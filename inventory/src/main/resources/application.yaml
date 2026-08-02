@@ -27,3 +27,5 @@ spring:
     username: guest
     password: guest
     connection-timeout: 5000
+server:
+  port: 8081

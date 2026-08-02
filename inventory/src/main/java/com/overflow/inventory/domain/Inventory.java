@@ -33,11 +33,12 @@ public class Inventory {
   }
 
 
-  public void withdraw(Integer quantity) {
+  public boolean withdraw(Integer quantity) {
     if(this.quantity < quantity) {
-      throw new IllegalArgumentException("Not enough inventory");
+     return false;
     }
     this.quantity -= quantity;
+    return true;
   }
 
 }

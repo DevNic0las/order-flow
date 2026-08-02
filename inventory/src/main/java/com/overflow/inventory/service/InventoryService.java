@@ -5,6 +5,8 @@ import com.overflow.inventory.dto.InventoryEventDto;
 import com.overflow.inventory.dto.InventoryResultEventDto;
 import com.overflow.inventory.messaging.InventoryPublisher;
 import com.overflow.inventory.repository.InventoryRepository;
+
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,19 +24,22 @@ public class InventoryService
 
     Inventory inventory = inventoryRepository.findById(productId)
             .orElseThrow(() -> new RuntimeException("Product not found in inventory"));
-    inventory.withdraw(quantity);
 
-    inventoryRepository.save(inventory);
-    
-    InventoryEventDto event = new InventoryEventDto(
-      orderId,
-      productId,
-      quantity
-    );
-    inventoryPublisher.publishInventoryResult(event);
+    boolean approved = inventory.withdraw(quantity);
 
-    log.info("Stock decreased for productId={} by quantity={}", productId, quantity);
+    if (approved) {
+        inventoryRepository.save(inventory);
+        log.info("Stock decreased for productId={} by quantity={}", productId, quantity);
+    } else {
+        log.warn("Insufficient stock for productId={}, requested={}, available={}",
+                productId, quantity, inventory.getQuantity());
+    }
 
-  }
+    InventoryResultEventDto result = new InventoryResultEventDto(orderId, approved);
+    inventoryPublisher.publishInventoryResult(result);
+}
+
+@Transactional
+public void 
 
 }
