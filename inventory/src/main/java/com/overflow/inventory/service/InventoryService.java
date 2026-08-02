@@ -2,6 +2,7 @@ package com.overflow.inventory.service;
 
 import com.overflow.inventory.domain.Inventory;
 import com.overflow.inventory.dto.InventoryEventDto;
+import com.overflow.inventory.dto.InventoryProductDto;
 import com.overflow.inventory.dto.InventoryResultEventDto;
 import com.overflow.inventory.messaging.InventoryPublisher;
 import com.overflow.inventory.repository.InventoryRepository;
@@ -40,6 +41,12 @@ public class InventoryService
 }
 
 @Transactional
-public void 
-
+public InventoryProductDto createProduct(InventoryProductDto productDto) {
+    Inventory inventory = new Inventory();
+    inventory.setProductName(productDto.productName());
+    inventory.setQuantity(productDto.quantity());
+    inventoryRepository.save(inventory);
+    log.info("Created new product in inventory: {}", productDto);
+    return new InventoryProductDto(inventory.getProductName(), inventory.getQuantity());
+}
 }
