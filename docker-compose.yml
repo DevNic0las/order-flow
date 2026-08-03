@@ -65,24 +65,7 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
-
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: orderflow-prometheus
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
-
-  grafana:
-    image: grafana/grafana:latest
-    container_name: orderflow-grafana
-    ports:
-      - "3000:3000"
-    environment:
-      GF_SECURITY_ADMIN_PASSWORD: admin
-    volumes:
-      - grafana_data:/var/lib/grafana
+        
   mailpit:
     image: axllent/mailpit:latest
     container_name: orderflow-mailpit

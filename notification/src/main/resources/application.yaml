@@ -15,5 +15,14 @@ spring:
     port: 5672
     username: guest
     password: guest
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  metrics:
+    tags:
+      application: notification-service
 server:
   port: 8082

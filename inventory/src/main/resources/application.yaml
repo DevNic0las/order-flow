@@ -27,5 +27,14 @@ spring:
     username: guest
     password: guest
     connection-timeout: 5000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  metrics:
+    tags:
+      application: inventory-service
 server:
   port: 8081
