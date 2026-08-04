@@ -1,4 +1,4 @@
-package com.github.devnic0las.order_flow.inventory.config;
+package com.overflow.inventory.config;
 
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -9,6 +9,11 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class RabbitMQConfig {
+
+  public static final String INVENTORY_QUEUE = "inventory.queue";
+  public static final String ORDER_RESULT_EXCHANGE = "order.result.exchange";
+
+
   @Bean
   public MessageConverter messageConverter() {
     return new Jackson2JsonMessageConverter();
