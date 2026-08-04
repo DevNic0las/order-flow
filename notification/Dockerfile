@@ -1,14 +1,17 @@
-
 FROM maven:3.9-eclipse-temurin-21-alpine AS build
 WORKDIR /app
-COPY ../../../../../../../src/main/java/com/github/devnic0las/order_flow/notification/pom.xml .
-RUN mvn dependency:go-offline -q
-COPY src ./src
-RUN mvn package -DskipTests -q
 
+COPY pom.xml .
+COPY order/pom.xml order/
+COPY inventory/pom.xml inventory/
+COPY notification/pom.xml notification/
+RUN mvn -pl notification -am dependency:go-offline -q
+
+COPY notification/src notification/src
+RUN mvn -pl notification -am package -DskipTests -q
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /app/notification/target/*.jar app.jar
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
