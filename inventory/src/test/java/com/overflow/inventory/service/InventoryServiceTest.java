@@ -1,4 +1,4 @@
-package inventory.service;
+package com.overflow.inventory.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
