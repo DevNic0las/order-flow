@@ -1,4 +1,4 @@
-package com.overflow.inventory.exception;
+package com.orderflow.inventory.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

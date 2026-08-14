@@ -1,4 +1,4 @@
-package com.overflow.inventory.exception;
+package com.orderflow.inventory.exception;
 
 import java.time.LocalDateTime;
 import java.util.Map;
