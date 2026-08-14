@@ -74,6 +74,13 @@
         <version>2.6.0</version>
     </dependency>
 
+
+    <dependency>
+        <groupId>com.github.devnic0las</groupId>
+        <artifactId>auth</artifactId>
+        <version>${project.version}</version>
+    </dependency>
+
     </dependencies>
 
     <build>

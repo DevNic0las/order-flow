@@ -18,12 +18,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.overflow.inventory.domain.Inventory;
-import com.overflow.inventory.dto.InventoryProductDto;
-import com.overflow.inventory.dto.InventoryResultEventDto;
-import com.overflow.inventory.messaging.InventoryPublisher;
-import com.overflow.inventory.repository.InventoryRepository;
-import com.overflow.inventory.service.InventoryService;
+import com.orderflow.inventory.domain.Inventory;
+import com.orderflow.inventory.dto.InventoryProductDto;
+import com.orderflow.inventory.dto.InventoryResultEventDto;
+import com.orderflow.inventory.messaging.InventoryPublisher;
+import com.orderflow.inventory.repository.InventoryRepository;
+import com.orderflow.inventory.service.InventoryService;
 import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class InventoryServiceTest {

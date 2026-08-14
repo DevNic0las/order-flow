@@ -13,6 +13,7 @@
         <module>order</module>
         <module>inventory</module>
         <module>notification</module>
+        <module>auth</module>
     </modules>
 
     <groupId>com.github.devnic0las</groupId>
