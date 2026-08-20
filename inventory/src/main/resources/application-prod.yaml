@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: inventory-service
+
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USER}
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: inventory
+    show-sql: false
+
+  flyway:
+    schemas: inventory
+    default-schema: inventory
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  rabbitmq:
+    addresses: ${RABBITMQ_URL}
+    connection-timeout: 5000
+    ssl:
+      enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  metrics:
+    tags:
+      application: inventory-service
+server:
+  port: 8081

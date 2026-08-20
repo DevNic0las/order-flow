@@ -8,7 +8,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.List;
 @Entity
-@Table(name = "users")
+@Table(name = "tb_users", schema = "users")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor @Builder
 public class User implements UserDetails{

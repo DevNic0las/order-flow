@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: inventory-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/orderflow?currentSchema=inventory
+    username: orderflow
+    password: orderflow
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: inventory
+    show-sql: false
+  jwt:
+    secret: ${JWT_SECRET}
+    duration: 3600000
+
+  flyway:
+    schemas:
+      - inventory
+    default-schema: inventory
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: 5672
+    username: guest
+    password: guest
+    connection-timeout: 5000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  metrics:
+    tags:
+      application: inventory-service
+server:
+  port: 8081

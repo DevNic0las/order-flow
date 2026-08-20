@@ -1,0 +1,4 @@
+spring:
+  jwt:
+    secret: ${JWT_SECRET}
+    duration: 3600000

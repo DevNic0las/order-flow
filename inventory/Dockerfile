@@ -5,6 +5,8 @@ COPY pom.xml .
 COPY order/pom.xml order/
 COPY inventory/pom.xml inventory/
 COPY notification/pom.xml notification/
+COPY auth/pom.xml auth/
+COPY auth/src auth/src
 RUN mvn -pl inventory -am dependency:go-offline -q
 
 COPY inventory/src inventory/src
