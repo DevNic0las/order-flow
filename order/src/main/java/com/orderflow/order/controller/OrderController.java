@@ -22,4 +22,9 @@ private final OrderService orderService;
   return ResponseEntity.ok(orderService.createOrder(orderRequestDto));
 }
 
+@GetMapping("/test")
+  public String test(){
+  return "test";
+}
+
 }

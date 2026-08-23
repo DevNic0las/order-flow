@@ -1,6 +1,8 @@
 package com.orderflow.auth.shared.domain;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcType;
+import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -23,8 +25,13 @@ public class User implements UserDetails{
     @Column(nullable = false)
     private String password;
 
+    @Column(name = "username")
+    private String userName;
+
+
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @JdbcType(PostgreSQLEnumJdbcType.class)
+    @Column(nullable = false, name = "role")
     private Role role;
 
     @Override
