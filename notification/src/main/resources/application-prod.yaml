@@ -3,12 +3,17 @@ spring:
     url: ${DATABASE_URL}
     username: ${DATABASE_USER}
     password: ${DATABASE_PASSWORD}
-  mail:
-    host: ${SMTP_HOST}
-    username: ${SMTP_USERNAME}
-    password: ${SMTP_PASSWORD}
-
   rabbitmq:
     addresses: ${RABBITMQ_URL}
     ssl:
       enabled: true
+
+  twilio:
+    account-sid: ${TWILIO_ACCOUNT_SID}
+    auth-token: ${TWILIO_AUTH_TOKEN}
+    phone-number: ${TWILIO_PHONE_NUMBER}
+
+  brevo:
+    api-key: ${BREVO_API_KEY}
+    sender-email: ${BREVO_SENDER_EMAIL}
+    sender-name: ${BREVO_SENDER_NAME}

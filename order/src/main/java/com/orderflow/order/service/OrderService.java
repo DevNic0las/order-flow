@@ -1,6 +1,7 @@
 package com.orderflow.order.service;
 
 import com.orderflow.order.domain.Order;
+import com.orderflow.order.dtos.OrderEventDto;
 import com.orderflow.order.dtos.OrderRequestDto;
 import com.orderflow.order.dtos.OrderResponseDto;
 import com.orderflow.order.exception.OrderNotFoundException;
@@ -32,7 +33,13 @@ public class OrderService {
 
     Order savedOrder = orderRepository.save(order);
 
-    orderPublisher.publishOrder(orderMapper.toOrderEventDto(savedOrder));
+    OrderEventDto orderEventDto = new OrderEventDto(
+            order.getId(),
+            order.getProductId(),
+            order.getQuantity()
+    );
+
+    orderPublisher.publishOrder(orderEventDto);
 
     return orderMapper.toResponseDto(savedOrder);
   }

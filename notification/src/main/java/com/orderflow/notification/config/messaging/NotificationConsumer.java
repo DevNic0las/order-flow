@@ -1,35 +1,23 @@
 package com.orderflow.notification.config.messaging;
 
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.stereotype.Component;
-
+import com.orderflow.notification.port.EmailSender;
 import com.orderflow.notification.config.RabbitMQConfig;
 import com.orderflow.notification.dto.NotificationEventDto;
-
+import com.orderflow.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
 @RequiredArgsConstructor
 public class NotificationConsumer {
-        private final JavaMailSender mailSender;
-
+    private final NotificationService sendMessage;
     @RabbitListener(queues = RabbitMQConfig.NOTIFICATION_QUEUE)
-    public void onOrderResult(NotificationEventDto event) {
+    public void listen(NotificationEventDto event) {
         log.info("Received notification event: {}", event);
+        sendMessage.processNotification(event);
 
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo("customer@example.com");
-        message.setSubject("Order " + event.orderId() + " update");
-        message.setText(event.approved()
-                ? "Your order was approved!"
-                : "Your order was rejected due to insufficient stock.");
-
-        mailSender.send(message);
-        log.info("Notification email sent for orderId={}", event.orderId());
     }
-
 }
