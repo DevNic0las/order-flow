@@ -35,5 +35,9 @@ management:
   metrics:
     tags:
       application: inventory-service
-server:
-  port: 8081
+
+logging:
+  level:
+    org:
+      springframework:
+        security: DEBUG
