@@ -23,7 +23,7 @@ public class OrderService {
   private final OrderRepository orderRepository;
 
   @Transactional
-  public OrderResponseDto createOrder(OrderRequestDto orderRequestDto){
+  public OrderResponseDto createOrder(OrderRequestDto orderRequestDto, String userId){
     log.info("Creating order for productId={} with quantity={}", orderRequestDto.productId(), orderRequestDto.quantity());
 
     Order order = new Order();
@@ -36,7 +36,8 @@ public class OrderService {
     OrderEventDto orderEventDto = new OrderEventDto(
             order.getId(),
             order.getProductId(),
-            order.getQuantity()
+            order.getQuantity(),
+            userId
     );
 
     orderPublisher.publishOrder(orderEventDto);

@@ -19,6 +19,6 @@ public class InventoryConsumer {
   @RabbitListener(queues = RabbitMQConfig.INVENTORY_QUEUE)
   public void onOrderInventoryResult(InventoryEventDto event) {
     log.info("Received inventory result: {}", event);
-    inventoryService.decreaseProductStock(event.orderId(), event.productId(), event.quantity());
+    inventoryService.decreaseProductStock(event.orderId(), event.productId(), event.quantity(),event.to());
   }
 }

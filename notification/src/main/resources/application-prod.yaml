@@ -8,12 +8,8 @@ spring:
     ssl:
       enabled: true
 
-  twilio:
-    account-sid: ${TWILIO_ACCOUNT_SID}
-    auth-token: ${TWILIO_AUTH_TOKEN}
-    phone-number: ${TWILIO_PHONE_NUMBER}
-
   brevo:
     api-key: ${BREVO_API_KEY}
     sender-email: ${BREVO_SENDER_EMAIL}
     sender-name: ${BREVO_SENDER_NAME}
+    base-url: ${BREVO_API_URL}

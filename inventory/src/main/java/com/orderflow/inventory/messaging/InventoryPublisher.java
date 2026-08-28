@@ -17,7 +17,7 @@ public class InventoryPublisher {
   private final RabbitTemplate rabbitTemplate;
 
   public void publishInventoryResult(InventoryResultEventDto event) {
-    log.info("Publishing inventory result with order ID: {}", event.orderId());
+    log.info("Publishing inventory result with order ID: {}, email: {}", event.orderId(),event.to());
     rabbitTemplate.convertAndSend(
             RabbitMQConfig.ORDER_RESULT_EXCHANGE,
             "",

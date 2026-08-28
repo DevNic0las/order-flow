@@ -57,7 +57,7 @@ void shouldDontDecreaseProductStockWhenProuctNotFound(){
     when(inventoryRepository.findById(anyLong())).thenReturn(Optional.empty());
 
     assertThrows(RuntimeException.class, ()->{
-        inventoryService.decreaseProductStock(null, 10L, null);
+        inventoryService.decreaseProductStock(null, 10L, null, "teste@gmail.com");
     });
     verify(inventoryRepository).findById(10L);
     verify(inventoryRepository, never())
@@ -69,7 +69,7 @@ void shouldDecreaseProductWhenProductExists(){
 when(inventoryRepository.findById(anyLong()))
 .thenReturn(Optional.of(inventory));
 
-inventoryService.decreaseProductStock(1L,inventory.getId(),25);
+inventoryService.decreaseProductStock(1L,inventory.getId(),25, "teste@gmail.com");
 
 assertEquals(75, inventory.getQuantity());
 

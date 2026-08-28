@@ -6,6 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record BrevoProperties(
         String apiKey,
         String senderEmail,
-        String senderName
+        String senderName,
+        String baseUrl
 ) {
 }

@@ -19,7 +19,7 @@ public class InventoryService
   private final InventoryRepository inventoryRepository;
   private final InventoryPublisher inventoryPublisher;
 
-  public void decreaseProductStock(Long orderId, Long productId, Integer quantity) {
+  public void decreaseProductStock(Long orderId, Long productId, Integer quantity, String email) {
     log.info("Decreasing stock for productId={} by quantity={}", productId, quantity);
 
     Inventory inventory = inventoryRepository.findById(productId)
@@ -35,7 +35,7 @@ public class InventoryService
                 productId, quantity, inventory.getQuantity());
     }
 
-    InventoryResultEventDto result = new InventoryResultEventDto(orderId, approved);
+    InventoryResultEventDto result = new InventoryResultEventDto(orderId, approved, email);
     inventoryPublisher.publishInventoryResult(result);
 }
 

@@ -61,10 +61,10 @@ class OrderServiceTest {
     @Test
     void shouldCreateOrderAndPublishEvent() {
         when(orderRepository.save(any(Order.class))).thenReturn(order);
-        when(orderMapper.toOrderEventDto(order)).thenReturn(new OrderEventDto(order.getId(), order.getProductId(), order.getQuantity()));
+        when(orderMapper.toOrderEventDto(order)).thenReturn(new OrderEventDto(order.getId(), order.getProductId(), order.getQuantity(),order.getCustomerName()));
         when(orderMapper.toResponseDto(order)).thenReturn(new OrderResponseDto(order.getId(), order.getCustomerName(), order.getProductId(), order.getQuantity(), order.getStatus().name(), null));
 
-        OrderResponseDto result = orderService.createOrder(orderRequestDto);
+        OrderResponseDto result = orderService.createOrder(orderRequestDto, "teste@gmail.com");
 
         assertNotNull(result);
         assertEquals(order.getId(), result.id());

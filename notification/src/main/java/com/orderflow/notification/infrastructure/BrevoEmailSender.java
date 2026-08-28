@@ -16,12 +16,20 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class BrevoEmailSender implements EmailSender {
 
-    private final WebClient.Builder webClientBuilder;
+    private final WebClient brevoWebClient;
     private final BrevoProperties brevoProperties;
 
     @Override
     public void sendMessageEmail(NotificationEventEmailDto event) {
-
+        log.info(
+                "Notification email received: to={}, subject={}, body={}",
+                event.to(),
+                event.subject(),
+                event.body()
+        );
+        if (event.to() == null || event.subject() == null || event.body() == null) {
+            throw new IllegalArgumentException("Invalid email notification event");
+        }
         var emailBody = Map.of(
                 "sender", Map.of(
                         "name", brevoProperties.senderName(),
@@ -33,9 +41,9 @@ public class BrevoEmailSender implements EmailSender {
                 "subject", event.subject(),
                 "textContent", event.body()
         );
-        webClientBuilder.build()
+        brevoWebClient
                 .post()
-                .uri("/v3/smtp/email")
+                .uri("/smtp/email")
                 .header("api-key", brevoProperties.apiKey())
                 .bodyValue(emailBody)
                 .retrieve()

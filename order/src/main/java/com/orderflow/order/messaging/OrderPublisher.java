@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 public class OrderPublisher {
   private final RabbitTemplate rabbitTemplate;
   public void publishOrder( OrderEventDto event){
-    log.info("Publishing order event: orderId={}", event.orderId());
+    log.info("Publishing order event: orderId={} , {}", event.orderId(), event.to());
   rabbitTemplate.convertAndSend(
           RabbitMq.ORDER_EXCHANGE,
           RabbitMq.RK_INVENTORY,
