@@ -10,6 +10,7 @@ public class WebClientConfig {
 
   @Bean
   public WebClient brevoWebClient(WebClient.Builder builder, BrevoProperties brevoProperties) {
+    System.out.println(brevoProperties.baseUrl());
     return builder.baseUrl(brevoProperties.baseUrl()).build();
   }
 }

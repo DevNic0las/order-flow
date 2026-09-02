@@ -49,6 +49,5 @@ public class BrevoEmailSender implements EmailSender {
                 .retrieve()
                 .bodyToMono(String.class)
                 .block();
-        log.info("Email sent to {} with subject: {}", event.to(), event.subject());
     }
 }

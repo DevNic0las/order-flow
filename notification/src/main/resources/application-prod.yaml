@@ -8,7 +8,7 @@ spring:
     ssl:
       enabled: true
 
-  brevo:
+brevo:
     api-key: ${BREVO_API_KEY}
     sender-email: ${BREVO_SENDER_EMAIL}
     sender-name: ${BREVO_SENDER_NAME}
