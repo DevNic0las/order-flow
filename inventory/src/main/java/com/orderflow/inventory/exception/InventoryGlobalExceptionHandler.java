@@ -31,4 +31,18 @@ public class InventoryGlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
+
+    @ExceptionHandler(InventoryNotFoundException.class)
+    public ResponseEntity<InventoryErrorResponseDto> handleInventoryNotFoundException(InventoryNotFoundException ex) {
+        InventoryErrorResponseDto error = new InventoryErrorResponseDto(
+                HttpStatus.NOT_FOUND.value(),
+                ex.getMessage(),
+                LocalDateTime.now(),
+                null
+        );
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+
+
 }

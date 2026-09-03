@@ -5,6 +5,15 @@ spring:
     password: ${DATABASE_PASSWORD}
   rabbitmq:
     addresses: ${RABBITMQ_URL}
+    listener:
+      simple:
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 20000
+          multiplier: 2.0
+          max-interval: 100000
+        default-requeue-rejected: true
     ssl:
       enabled: true
 
