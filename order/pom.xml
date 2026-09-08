@@ -74,17 +74,11 @@
         <version>2.6.0</version>
     </dependency>
 
-
     <dependency>
-        <groupId>com.github.devnic0las</groupId>
-        <artifactId>auth</artifactId>
+        <groupId>com.orderflow.authsecurity</groupId>
+        <artifactId>auth-security</artifactId>
         <version>${project.version}</version>
     </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
 
     </dependencies>
 

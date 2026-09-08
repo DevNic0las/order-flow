@@ -1,7 +1,6 @@
 package com.orderflow.inventory.controller;
 
-
-import com.orderflow.auth.shared.service.JwtService;
+import com.orderflow.authsecurity.JwtTokenValidator;
 import com.orderflow.inventory.config.SecurityConfig;
 import com.orderflow.inventory.service.InventoryService;
 import org.junit.jupiter.api.Test;
@@ -11,15 +10,13 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.web.servlet.MockMvc;
-
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+
 @WebMvcTest(InventoryController.class)
 @AutoConfigureMockMvc
 @Import(SecurityConfig.class)
@@ -32,10 +29,7 @@ class InventoryControllerTest {
     private InventoryService inventoryService;
 
     @MockBean
-    private JwtService jwtService;
-
-    @MockBean
-    private UserDetailsService userDetailsService;
+    private JwtTokenValidator jwtTokenValidator;
 
     @Test
     void shouldReturnBadRequestWhenProductNameIsBlank() throws Exception {
@@ -72,4 +66,7 @@ class InventoryControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors.quantity").exists());
     }
+
 }
+
+

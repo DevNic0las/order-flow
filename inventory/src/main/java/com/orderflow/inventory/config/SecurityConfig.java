@@ -3,7 +3,7 @@ package com.orderflow.inventory.config;
 
 
 
-import com.orderflow.auth.shared.security.JwtAuthFilter;
+import com.orderflow.authsecurity.JwtAuthFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;

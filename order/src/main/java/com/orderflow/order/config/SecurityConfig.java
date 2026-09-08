@@ -1,8 +1,8 @@
 package com.orderflow.order.config;
 
+import com.orderflow.authsecurity.JwtAuthFilter;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
-import com.orderflow.auth.shared.security.JwtAuthFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
