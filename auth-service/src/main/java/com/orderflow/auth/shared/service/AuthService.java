@@ -30,7 +30,7 @@ public class AuthService {
         User user = User.builder()
                 .email(request.email())
                 .password(passwordEncoder.encode(request.password()))
-                .userName(request.userName())
+                .userName(request.username())
                 .role(Role.CUSTOMER)
                 .build();
         userRepository.save(user);
@@ -38,11 +38,22 @@ public class AuthService {
     }
 
     public AuthResponseDto login(LoginRequestDto request) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.email(), request.password())
-        );
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.email(), request.password())
+            );
+        } catch (org.springframework.security.core.AuthenticationException ex) {
+            // Translate authentication failures to 400 Bad Request for login attempts
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "Invalid credentials",
+                    ex
+            );
+        }
+
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow();
+
         return new AuthResponseDto(jwtService.generateToken(user));
     }
 }

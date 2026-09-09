@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: auth-service
+
+server:
+  port: 8084
+  forward-headers-strategy: framework
+  servlet:
+    context-path: /auth
+
+
+
+jwt:
+  secret: ${JWT_SECRET}
+  duration: 3600000

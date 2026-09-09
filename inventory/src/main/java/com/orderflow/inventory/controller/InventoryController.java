@@ -19,7 +19,6 @@ import java.util.List;
 
 
 @RestController
-@RequestMapping("/inventory")
 @RequiredArgsConstructor
 public class InventoryController {
     private final InventoryService inventoryService;

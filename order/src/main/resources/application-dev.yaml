@@ -18,7 +18,6 @@ spring:
   flyway:
     schemas:
       - orders
-      - users
     default-schema: orders
     locations: classpath:db/migration/orders
     baseline-on-migrate: false

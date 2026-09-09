@@ -24,7 +24,11 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
   private String secret;
 
   private static final List<String> PUBLIC_PATHS = List.of(
-          "/auth/login", "/auth/register", "/swagger-ui", "/v3/api-docs"
+          "/auth/login", "/auth/register"
+  );
+
+  private static final List<String> PUBLIC_PATH_FRAGMENTS = List.of(
+          "/swagger-ui", "/v3/api-docs"
   );
 
   private SecretKey key() {
@@ -35,10 +39,12 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
   public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
     String path = exchange.getRequest().getURI().getPath();
 
-    if (PUBLIC_PATHS.stream().anyMatch(path::startsWith)) {
+    boolean isPublic = PUBLIC_PATHS.stream().anyMatch(path::equals)
+            || PUBLIC_PATH_FRAGMENTS.stream().anyMatch(path::contains);
+
+    if (isPublic) {
       return chain.filter(exchange);
     }
-
     String header = exchange.getRequest().getHeaders().getFirst("Authorization");
 
     if (header == null || !header.startsWith("Bearer ")) {

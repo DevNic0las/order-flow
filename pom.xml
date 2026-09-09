@@ -13,7 +13,7 @@
         <module>order</module>
         <module>inventory</module>
         <module>notification</module>
-        <module>auth</module>
+        <module>auth-service</module>
         <module>gateway</module>
         <module>auth-security</module>
 

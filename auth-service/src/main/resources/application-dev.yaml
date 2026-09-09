@@ -1,0 +1,30 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/orderflow?currentSchema=users
+    username: orderflow
+    password: orderflow
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: users
+    show-sql: false
+
+  flyway:
+    schemas:
+      - users
+    default-schema: users
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+jwt:
+  secret: ${JWT_SECRET}
+  duration: 3600000
+
+
+logging:
+  level:
+    org.springframework.security: TRACE
