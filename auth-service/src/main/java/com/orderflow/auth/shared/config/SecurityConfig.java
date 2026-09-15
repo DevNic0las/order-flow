@@ -42,7 +42,8 @@ public class SecurityConfig{
                             "/login",
                             "/register",
                             "/auth/login",
-                            "/auth/register"
+                            "/auth/register",
+                            "/verifycode"
                     ).permitAll()
                     .anyRequest().authenticated()
             )

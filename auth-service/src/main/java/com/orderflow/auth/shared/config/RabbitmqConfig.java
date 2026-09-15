@@ -1,4 +1,5 @@
-package com.orderflow.notification.config;
+package com.orderflow.auth.shared.config;
+
 
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -8,10 +9,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class RabbitMQConfig {
+public class RabbitmqConfig {
 
-public static final String NOTIFICATION_QUEUE = "notification.queue";
-public static final String EMAIL_VERIFICATION_QUEUE = "email.verification.queue";
+  public static final String NOTIFICATION_EXCHANGE =
+          "notification.exchange";
+
+  public static final String RK_EMAIL_VERIFICATION =
+          "rk.email.verification";
 
   @Bean
   public MessageConverter messageConverter() {
@@ -19,9 +23,14 @@ public static final String EMAIL_VERIFICATION_QUEUE = "email.verification.queue"
   }
 
   @Bean
-  public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
-    RabbitTemplate template = new RabbitTemplate(connectionFactory);
+  public RabbitTemplate rabbitTemplate(
+          ConnectionFactory connectionFactory) {
+
+    RabbitTemplate template =
+            new RabbitTemplate(connectionFactory);
+
     template.setMessageConverter(messageConverter());
+
     return template;
   }
 }

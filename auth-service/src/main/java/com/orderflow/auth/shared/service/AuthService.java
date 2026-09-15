@@ -3,9 +3,12 @@ package com.orderflow.auth.shared.service;
 import com.orderflow.auth.shared.domain.Role;
 import com.orderflow.auth.shared.domain.User;
 import com.orderflow.auth.shared.dto.AuthResponseDto;
+import com.orderflow.auth.shared.dto.EmailVerificationEventDto;
 import com.orderflow.auth.shared.dto.LoginRequestDto;
 import com.orderflow.auth.shared.dto.RegisterRequestDto;
+import com.orderflow.auth.shared.messaging.EmailVerificationProducer;
 import com.orderflow.auth.shared.repository.UserRepository;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,13 +20,20 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenGenerator jwtService;
     private final AuthenticationManager authenticationManager;
-
+    private final EmailVerificationService emailVerificationService;
+    private final EmailVerificationProducer emailVerificationProducer;
     public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder,
-                       JwtTokenGenerator jwtService, AuthenticationManager authenticationManager) {
+                       JwtTokenGenerator jwtService, AuthenticationManager authenticationManager,
+                       EmailVerificationService emailVerificationService,
+                       EmailVerificationProducer emailVerificationProducer
+
+    ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
+        this.emailVerificationService = emailVerificationService;
+        this.emailVerificationProducer = emailVerificationProducer;
     }
 
     public AuthResponseDto register(RegisterRequestDto request) {
@@ -34,6 +44,9 @@ public class AuthService {
                 .role(Role.CUSTOMER)
                 .build();
         userRepository.save(user);
+
+        String code = emailVerificationService.createVerification(user);
+        emailVerificationProducer.send(new EmailVerificationEventDto(user.getEmail(), code));
         return new AuthResponseDto(jwtService.generateToken(user));
     }
 

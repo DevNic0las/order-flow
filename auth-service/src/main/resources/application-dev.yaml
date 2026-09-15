@@ -16,9 +16,16 @@ spring:
   flyway:
     schemas:
       - users
+      - email_verification
     default-schema: users
     locations: classpath:db/migration
     baseline-on-migrate: true
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: 5672
+    username: guest
+    password: guest
 
 jwt:
   secret: ${JWT_SECRET}

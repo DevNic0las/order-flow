@@ -1,5 +1,6 @@
 package com.orderflow.notification.service;
 
+import com.orderflow.notification.dto.NotificationEmailVerification;
 import com.orderflow.notification.dto.NotificationEventDto;
 import com.orderflow.notification.dto.NotificationEventEmailDto;
 import com.orderflow.notification.infrastructure.BrevoEmailSender;
@@ -20,6 +21,16 @@ public class NotificationService {
             event.to(),
             "Pedido aprovado!",
             "Seu pedido: " + event.orderId() + " foi aprovado!"
+    );
+    brevoEmailSender.sendMessageEmail(notificationEventEmailDto);
+  }
+
+
+  public void processEmailVerification(NotificationEmailVerification event) {
+    NotificationEventEmailDto notificationEventEmailDto = new NotificationEventEmailDto(
+            event.to(),
+            "Verificação de e-mail",
+            "Por favor, digite o codigo para confirmar seu email: " + event.code()
     );
     brevoEmailSender.sendMessageEmail(notificationEventEmailDto);
   }

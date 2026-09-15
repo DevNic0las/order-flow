@@ -14,18 +14,21 @@ public class RabbitMq {
   public static final String ORDER_EXCHANGE       = "order.exchange";
   public static final String ORDER_RESULT_EXCHANGE = "order.result.exchange";
   public static final String DLQ_EXCHANGE         = "dlq.exchange";
-
+  public static final String NOTIFICATION_EXCHANGE =
+          "notification.exchange";
   // --- Routing Keys ---
   public static final String RK_INVENTORY   = "rk.inventory";
   public static final String RK_NOTIFICATION = "rk.notification";
-
+  public static final String RK_EMAIL_VERIFICATION = "rk.email.verification";
   // --- Queues ---
   public static final String INVENTORY_QUEUE    = "inventory.queue";
   public static final String NOTIFICATION_QUEUE = "notification.queue";
   public static final String ORDER_RESULT_QUEUE = "order.result.queue";
   public static final String INVENTORY_DLQ      = "inventory.dlq";
   public static final String NOTIFICATION_DLQ   = "notification.dlq";
-
+  public static final String EMAIL_VERIFICATION_QUEUE = "email.verification.queue";
+  public static final String EMAIL_VERIFICATION_DLQ =
+          "email.verification.dlq";
   // ---- Exchanges ----
 
   @Bean
@@ -36,6 +39,11 @@ public class RabbitMq {
   @Bean
   public FanoutExchange orderResultExchange() {
     return new FanoutExchange(ORDER_RESULT_EXCHANGE);
+  }
+
+  @Bean
+  public DirectExchange notificationExchange() {
+    return new DirectExchange(NOTIFICATION_EXCHANGE);
   }
 
   @Bean
@@ -60,6 +68,17 @@ public class RabbitMq {
             .withArgument("x-dead-letter-routing-key", NOTIFICATION_DLQ)
             .build();
   }
+
+  @Bean
+  public Queue emailVerificationQueue() {
+    return QueueBuilder.durable(EMAIL_VERIFICATION_QUEUE)
+            .withArgument("x-dead-letter-exchange", DLQ_EXCHANGE)
+            .withArgument("x-dead-letter-routing-key", EMAIL_VERIFICATION_DLQ)
+            .build();
+  }
+
+
+
 
   @Bean
   public Queue orderResultQueue() {
@@ -113,6 +132,15 @@ public class RabbitMq {
             .to(dlqExchange())
             .with(NOTIFICATION_DLQ);
   }
+
+  @Bean
+  public Binding emailVerificationBinding() {
+    return BindingBuilder
+            .bind(emailVerificationQueue())
+            .to(notificationExchange())
+            .with(RK_EMAIL_VERIFICATION);
+  }
+
 
   // ---- Serialização JSON ----
 

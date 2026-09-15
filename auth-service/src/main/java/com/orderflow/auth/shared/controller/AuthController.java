@@ -6,10 +6,8 @@ import com.orderflow.auth.shared.dto.LoginRequestDto;
 import com.orderflow.auth.shared.dto.RegisterRequestDto;
 import com.orderflow.auth.shared.service.AuthService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -25,4 +23,9 @@ public class AuthController {
     public AuthResponseDto login(@RequestBody LoginRequestDto request) {
         return authService.login(request);
     }
+
+
 }
+
+
+

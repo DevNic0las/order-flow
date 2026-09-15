@@ -35,7 +35,7 @@ class InventoryControllerTest {
     void shouldReturnBadRequestWhenProductNameIsBlank() throws Exception {
         String payload = "{\"productName\": \" \", \"quantity\": 10}";
 
-        mockMvc.perform(post("/inventory/products")
+        mockMvc.perform(post("/products")
                         .with(user("admin").roles("ADMIN"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
@@ -47,7 +47,7 @@ class InventoryControllerTest {
     void shouldReturnBadRequestWhenQuantityIsMissing() throws Exception {
         String payload = "{\"productName\": \"Valid name\"}";
 
-        mockMvc.perform(post("/inventory/products")
+        mockMvc.perform(post("/products")
                         .with(user("admin").roles("ADMIN"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
@@ -59,7 +59,7 @@ class InventoryControllerTest {
     void shouldReturnBadRequestWhenQuantityIsNotPositive() throws Exception {
         String payload = "{\"productName\": \"Valid name\", \"quantity\": 0}";
 
-        mockMvc.perform(post("/inventory/products")
+        mockMvc.perform(post("/products")
                         .with(user("admin").roles("ADMIN"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
