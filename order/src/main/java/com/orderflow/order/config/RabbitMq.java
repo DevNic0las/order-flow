@@ -78,7 +78,12 @@ public class RabbitMq {
   }
 
 
-
+  @Bean
+  public Queue emailVerificationDlq() {
+    return QueueBuilder
+            .durable(EMAIL_VERIFICATION_DLQ)
+            .build();
+  }
 
   @Bean
   public Queue orderResultQueue() {
@@ -140,7 +145,13 @@ public class RabbitMq {
             .to(notificationExchange())
             .with(RK_EMAIL_VERIFICATION);
   }
-
+  @Bean
+  public Binding emailVerificationDlqBinding() {
+    return BindingBuilder
+            .bind(emailVerificationDlq())
+            .to(dlqExchange())
+            .with(EMAIL_VERIFICATION_DLQ);
+  }
 
   // ---- Serialização JSON ----
 

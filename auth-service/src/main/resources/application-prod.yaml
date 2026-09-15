@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: order-service
+
+  datasource:
+    url: ${DATABASE_URL}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: users
+    show-sql: false
+
+  flyway:
+    schemas:
+      - users
+      - email_verification
+    default-schema: users
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  rabbitmq:
+    addresses: ${RABBITMQ_URL}
+    connection-timeout: 5000
+    ssl:
+      enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  metrics:
+    tags:
+      application: auth-service
+logging:
+  level:
+    org:
+      springframework:
+        security: DEBUG

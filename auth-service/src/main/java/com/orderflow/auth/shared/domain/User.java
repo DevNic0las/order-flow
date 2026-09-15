@@ -34,9 +34,6 @@ public class User implements UserDetails{
     @Column(nullable = false, name = "role")
     private Role role;
 
-    @Column(name = "email_verified", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
-    private Boolean emailVerified;
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));

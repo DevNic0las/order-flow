@@ -8,6 +8,5 @@ CREATE TABLE users.tb_users
     password VARCHAR(255) NOT NULL,
     role  user_role NOT NULL,
     created_at    TIMESTAMP    NOT NULL DEFAULT now(),
-    updated_at    TIMESTAMP    NOT NULL DEFAULT now(),
-    email_verified BOOLEAN NOT NULL DEFAULT FALSE
+    updated_at    TIMESTAMP    NOT NULL DEFAULT now()
 );

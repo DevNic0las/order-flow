@@ -37,4 +37,9 @@ public class EmailVerification {
 
   @Column(nullable = false)
   private boolean verified;
+
+  @Column(name="token", nullable = false)
+  private String token;
+
+
 }

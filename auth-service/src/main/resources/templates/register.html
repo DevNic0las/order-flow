@@ -1,11 +1,10 @@
-```html
-<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
-
+<!DOCTYPE html>
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Verificar e-mail</title>
+    <title>Criar conta</title>
 
     <style>
         * {
@@ -20,6 +19,7 @@
             align-items: center;
             justify-content: center;
             padding: 20px;
+
             background: #f4f5f7;
             font-family: Arial, sans-serif;
             color: #222;
@@ -28,57 +28,65 @@
         .container {
             width: 100%;
             max-width: 400px;
+
             padding: 32px;
+
             background: #fff;
             border-radius: 12px;
+
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-            text-align: center;
         }
 
         h1 {
             margin-bottom: 10px;
+            text-align: center;
             font-size: 26px;
         }
 
         .description {
-            margin-bottom: 8px;
+            margin-bottom: 28px;
+            text-align: center;
             color: #666;
             line-height: 1.5;
         }
 
-        .email {
-            margin-bottom: 25px;
-            font-weight: bold;
-            word-break: break-word;
+        .field {
+            margin-bottom: 18px;
         }
 
-        .code-input {
+        label {
+            display: block;
+            margin-bottom: 7px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        input {
             width: 100%;
-            padding: 14px;
+            padding: 13px;
+
             border: 1px solid #ccc;
             border-radius: 7px;
-            font-size: 24px;
-            text-align: center;
-            letter-spacing: 8px;
+
+            font-size: 15px;
         }
 
-        .code-input:focus {
+        input:focus {
             outline: none;
             border-color: #555;
         }
 
-        .code-input:invalid:not(:placeholder-shown) {
-            border-color: #b00020;
-        }
-
         button {
             width: 100%;
-            margin-top: 18px;
+            margin-top: 8px;
             padding: 13px;
+
             border: none;
             border-radius: 7px;
+
             background: #222;
             color: #fff;
+
             font-size: 15px;
             cursor: pointer;
         }
@@ -94,10 +102,14 @@
 
         .message {
             display: none;
+
             margin-bottom: 18px;
             padding: 10px;
+
             border-radius: 6px;
+
             font-size: 14px;
+            text-align: center;
         }
 
         .message.error {
@@ -112,19 +124,21 @@
             color: #176b17;
         }
 
-        .resend {
+        .login {
             margin-top: 20px;
-            color: #666;
+
+            text-align: center;
             font-size: 14px;
+            color: #666;
         }
 
-        .resend a {
+        .login a {
             color: #222;
             font-weight: bold;
             text-decoration: none;
         }
 
-        .resend a:hover {
+        .login a:hover {
             text-decoration: underline;
         }
     </style>
@@ -134,147 +148,171 @@
 
 <div class="container">
 
-    <h1>Verifique seu e-mail</h1>
+    <h1>Criar conta</h1>
 
     <p class="description">
-        Enviamos um código de 6 dígitos para:
+        Crie sua conta para começar.
     </p>
 
-    <p class="email" th:text="${email}">
-        seu@email.com
-    </p>
+    <div id="message" class="message" role="alert"></div>
 
-    <!--
-        O token identifica a tentativa de verificação.
-        Ele NÃO é o código enviado por e-mail.
-    -->
-    <input
-            type="hidden"
-            id="verificationToken"
-            th:value="${verificationToken}"
-    >
+    <form id="registerForm">
 
-    <div
-            id="message"
-            class="message"
-            role="alert">
-    </div>
+        <div class="field">
+            <label for="username">Nome de usuário</label>
 
-    <form id="verifyForm">
+            <input
+                    id="username"
+                    type="text"
+                    name="username"
+                    placeholder="Seu nome"
+                    autocomplete="username"
+                    required
+            >
+        </div>
 
-        <input
-                id="code"
-                class="code-input"
-                type="text"
-                name="code"
-                inputmode="numeric"
-                maxlength="6"
-                pattern="[0-9]{6}"
-                placeholder="000000"
-                autocomplete="one-time-code"
-                required
-                aria-label="Código de verificação"
-        >
+        <div class="field">
+            <label for="email">E-mail</label>
 
-        <button
-                id="verifyButton"
-                type="submit">
-            Verificar
+            <input
+                    id="email"
+                    type="email"
+                    name="email"
+                    placeholder="seu@email.com"
+                    autocomplete="email"
+                    required
+            >
+        </div>
+
+        <div class="field">
+            <label for="password">Senha</label>
+
+            <input
+                    id="password"
+                    type="password"
+                    name="password"
+                    placeholder="Sua senha"
+                    autocomplete="new-password"
+                    required
+            >
+        </div>
+
+        <button id="registerButton" type="submit">
+            Criar conta
         </button>
 
     </form>
 
-    <p class="resend">
-        Não recebeu o código?
-        <a href="/auth/resend-code">
-            Enviar novamente
-        </a>
+    <p class="login">
+        Já possui uma conta?
+        <a href="/login">Entrar</a>
     </p>
 
 </div>
 
 <script>
-    const form = document.getElementById("verifyForm");
-    const codeInput = document.getElementById("code");
-    const tokenInput = document.getElementById("verificationToken");
-    const verifyButton = document.getElementById("verifyButton");
+
+    const form = document.getElementById("registerForm");
+    const registerButton = document.getElementById("registerButton");
     const message = document.getElementById("message");
 
     form.addEventListener("submit", async (event) => {
+
         event.preventDefault();
 
         clearMessage();
 
-        const code = codeInput.value.trim();
-        const token = tokenInput.value;
+        const username = document.getElementById("username").value.trim();
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value;
 
-        if (!/^\d{6}$/.test(code)) {
-            showError("Digite um código válido de 6 dígitos.");
-            return;
-        }
-
-        if (!token) {
-            showError("Token de verificação não encontrado.");
+        if (!username || !email || !password) {
+            showError("Preencha todos os campos.");
             return;
         }
 
         setLoading(true);
 
         try {
-            const response = await fetch("/auth/verifycode", {
+
+            const response = await fetch("/auth/register", {
                 method: "POST",
+
                 headers: {
                     "Content-Type": "application/json"
                 },
+
                 body: JSON.stringify({
-                    token: token,
-                    code: code
+                    username: username,
+                    email: email,
+                    password: password
                 })
             });
 
             const data = await response.json();
 
             if (!response.ok) {
-                showError(data.message || "Não foi possível verificar o código.");
+                showError(
+                    data.message || "Não foi possível criar sua conta."
+                );
                 return;
             }
 
-            showSuccess("E-mail verificado com sucesso!");
+            /*
+             * O backend retorna o token de verificação.
+             *
+             * Não mostramos o código aqui.
+             * O código deve chegar pelo e-mail.
+             */
 
-            localStorage.setItem("token", data.token);
+            window.location.href =
+                "/auth/verifycode/email?token=" + encodeURIComponent(data.token);
 
-            window.location.href = "/home";
         } catch (error) {
+
             console.error(error);
-            showError("Não foi possível conectar ao servidor.");
+
+            showError(
+                "Não foi possível conectar ao servidor."
+            );
+
         } finally {
+
             setLoading(false);
         }
     });
 
+
     function setLoading(loading) {
-        verifyButton.disabled = loading;
-        verifyButton.textContent = loading
-            ? "Verificando..."
-            : "Verificar";
+
+        registerButton.disabled = loading;
+
+        registerButton.textContent =
+            loading ? "Criando conta..." : "Criar conta";
     }
 
+
     function showError(text) {
+
         message.textContent = text;
         message.className = "message error";
     }
 
+
     function showSuccess(text) {
+
         message.textContent = text;
         message.className = "message success";
     }
 
+
     function clearMessage() {
+
         message.textContent = "";
         message.className = "message";
     }
+
 </script>
 
 </body>
 </html>
-```

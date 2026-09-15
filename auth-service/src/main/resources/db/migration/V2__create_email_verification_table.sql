@@ -6,5 +6,6 @@ CREATE TABLE email_verification.tb_email_verification (
                                                               REFERENCES users.tb_users(id) ON DELETE CASCADE,
                                                           verification_code VARCHAR(6) NOT NULL,
                                                           expiration_at TIMESTAMP NOT NULL,
-                                                          verified BOOLEAN NOT NULL DEFAULT FALSE
+                                                          verified BOOLEAN NOT NULL DEFAULT FALSE,
+                                                        token VARCHAR(255) NOT NULL
 );
