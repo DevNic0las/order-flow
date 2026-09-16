@@ -67,6 +67,18 @@ class InventoryControllerTest {
                 .andExpect(jsonPath("$.errors.quantity").exists());
     }
 
+    @Test
+    void shouldReturnBadRequestWhenQuantityIsNegative() throws Exception {
+        String payload = "{\"productName\": \"Valid name\", \"quantity\": -1}";
+
+        mockMvc.perform(post("/products")
+                        .with(user("admin").roles("ADMIN"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.quantity").exists());
+    }
+
 }
 
 

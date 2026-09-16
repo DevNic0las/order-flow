@@ -43,6 +43,14 @@ public class InventoryGlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 
-
-
+    @ExceptionHandler(InvalidInventoryQuantityException.class)
+    public ResponseEntity<InventoryErrorResponseDto> handleInvalidInventoryQuantityException(InvalidInventoryQuantityException ex) {
+        InventoryErrorResponseDto error = new InventoryErrorResponseDto(
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(),
+                LocalDateTime.now(),
+                null
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
 }

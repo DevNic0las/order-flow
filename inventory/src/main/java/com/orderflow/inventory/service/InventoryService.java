@@ -3,6 +3,7 @@ package com.orderflow.inventory.service;
 import com.orderflow.inventory.domain.Inventory;
 import com.orderflow.inventory.dto.InventoryProductDto;
 import com.orderflow.inventory.dto.InventoryResultEventDto;
+import com.orderflow.inventory.exception.InvalidInventoryQuantityException;
 import com.orderflow.inventory.exception.InventoryNotFoundException;
 import com.orderflow.inventory.messaging.InventoryPublisher;
 import com.orderflow.inventory.repository.InventoryRepository;
@@ -23,23 +24,27 @@ public class InventoryService
   private final InventoryPublisher inventoryPublisher;
 
   public void decreaseProductStock(Long orderId, Long productId, Integer quantity, String email) {
-    log.info("Decreasing stock for productId={} by quantity={}", productId, quantity);
+  if (quantity == null || quantity <= 0) {
+    throw new InvalidInventoryQuantityException("Quantity must be greater than zero");
+  }
 
-    Inventory inventory = inventoryRepository.findById(productId)
-            .orElseThrow(() -> new InventoryNotFoundException("Product not found in inventory"));
+  log.info("Decreasing stock for productId={} by quantity={}", productId, quantity);
 
-    boolean approved = inventory.withdraw(quantity);
+  Inventory inventory = inventoryRepository.findById(productId)
+          .orElseThrow(() -> new InventoryNotFoundException("Product not found in inventory"));
 
-    if (approved) {
-        inventoryRepository.save(inventory);
-        log.info("Stock decreased for productId={} by quantity={}", productId, quantity);
-    } else {
-        log.warn("Insufficient stock for productId={}, requested={}, available={}",
-                productId, quantity, inventory.getQuantity());
-    }
+  boolean approved = inventory.withdraw(quantity);
 
-    InventoryResultEventDto result = new InventoryResultEventDto(orderId, approved, email);
-    inventoryPublisher.publishInventoryResult(result);
+  if (approved) {
+      inventoryRepository.save(inventory);
+      log.info("Stock decreased for productId={} by quantity={}", productId, quantity);
+  } else {
+      log.warn("Insufficient stock for productId={}, requested={}, available={}",
+              productId, quantity, inventory.getQuantity());
+  }
+
+  InventoryResultEventDto result = new InventoryResultEventDto(orderId, approved, email);
+  inventoryPublisher.publishInventoryResult(result);
 }
 
 @Transactional

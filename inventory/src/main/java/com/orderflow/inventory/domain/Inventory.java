@@ -1,5 +1,6 @@
 package com.orderflow.inventory.domain;
 
+import com.orderflow.inventory.exception.InvalidInventoryQuantityException;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,9 +35,14 @@ public class Inventory {
 
 
   public boolean withdraw(Integer quantity) {
-    if(this.quantity < quantity) {
+    if (quantity == null || quantity <= 0) {
+     throw new InvalidInventoryQuantityException("Quantity must be greater than zero");
+    }
+
+    if (this.quantity < quantity) {
      return false;
     }
+
     this.quantity -= quantity;
     return true;
   }
