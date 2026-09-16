@@ -2,8 +2,14 @@ package com.orderflow.auth.shared.service;
 
 import com.orderflow.auth.shared.domain.EmailVerification;
 import com.orderflow.auth.shared.domain.User;
+import com.orderflow.auth.shared.exception.EmailAlreadyVerifiedException;
+import com.orderflow.auth.shared.exception.InvalidRequestException;
+import com.orderflow.auth.shared.exception.InvalidVerificationCodeException;
+import com.orderflow.auth.shared.exception.InvalidVerificationTokenException;
+import com.orderflow.auth.shared.exception.VerificationCodeExpiredException;
 import com.orderflow.auth.shared.repository.EmailVerificationRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -14,59 +20,71 @@ import java.util.concurrent.ThreadLocalRandom;
 @RequiredArgsConstructor
 public class EmailVerificationService {
 
-  private final EmailVerificationRepository repository;
+    private final EmailVerificationRepository repository;
 
-  public EmailVerification createVerification(User user) {
+    public EmailVerification createVerification(User user) {
+        if (user == null) {
+            throw new InvalidRequestException("User is required");
+        }
 
-    String code = generateCode();
-    String token = generateToken();
+        String code = generateCode();
+        String token = generateToken();
 
-    EmailVerification verification = EmailVerification.builder()
-            .user(user)
-            .verificationCode(code)
-            .token(token)
-            .expirationAt(LocalDateTime.now().plusMinutes(10))
-            .verified(false)
-            .build();
+        EmailVerification verification = EmailVerification.builder()
+                .user(user)
+                .verificationCode(code)
+                .token(token)
+                .expirationAt(LocalDateTime.now().plusMinutes(10))
+                .verified(false)
+                .build();
 
-     repository.save(verification);
-     return verification;
-  }
+        try {
+            repository.save(verification);
+        } catch (DataIntegrityViolationException ex) {
+            throw new InvalidRequestException("Email verification could not be created");
+        }
 
-  public User verify(String token, String code) {
-
-    EmailVerification verification =
-            repository.findByToken(token)
-                    .orElseThrow(() ->
-                            new RuntimeException("Token inválido"));
-
-    if (verification.isVerified()) {
-      throw new RuntimeException("E-mail já verificado");
+        return verification;
     }
 
-    if (verification.getExpirationAt().isBefore(LocalDateTime.now())) {
-      throw new RuntimeException("Código expirado");
+    public User verify(String token, String code) {
+        if (token == null || token.isBlank()) {
+            throw new InvalidVerificationTokenException("Verification token is required");
+        }
+
+        if (code == null || code.isBlank()) {
+            throw new InvalidVerificationCodeException("Verification code is required");
+        }
+
+        EmailVerification verification = repository.findByToken(token)
+                .orElseThrow(() -> new InvalidVerificationTokenException("Invalid verification token"));
+
+        if (verification.isVerified()) {
+            throw new EmailAlreadyVerifiedException("Email already verified");
+        }
+
+        if (verification.getExpirationAt().isBefore(LocalDateTime.now())) {
+            throw new VerificationCodeExpiredException("Verification code expired");
+        }
+
+        if (!verification.getVerificationCode().equals(code)) {
+            throw new InvalidVerificationCodeException("Invalid verification code");
+        }
+
+        verification.setVerified(true);
+        repository.save(verification);
+
+        return verification.getUser();
     }
 
-    if (!verification.getVerificationCode().equals(code)) {
-      throw new RuntimeException("Código inválido");
+    private String generateCode() {
+        return String.valueOf(
+                ThreadLocalRandom.current()
+                        .nextInt(100000, 1000000)
+        );
     }
 
-    verification.setVerified(true);
-    repository.save(verification);
-
-    return verification.getUser();
-  }
-
-
-  private String generateCode() {
-    return String.valueOf(
-            ThreadLocalRandom.current()
-                    .nextInt(100000, 1000000)
-    );
-  }
-
-  private String generateToken() {
-    return UUID.randomUUID().toString();
-  }
+    private String generateToken() {
+        return UUID.randomUUID().toString();
+    }
 }

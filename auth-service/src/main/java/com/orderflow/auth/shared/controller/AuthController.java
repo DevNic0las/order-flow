@@ -1,37 +1,35 @@
 package com.orderflow.auth.shared.controller;
 
-
-import com.orderflow.auth.shared.domain.User;
-import com.orderflow.auth.shared.dto.*;
+import com.orderflow.auth.shared.dto.AuthResponseDto;
+import com.orderflow.auth.shared.dto.LoginRequestDto;
+import com.orderflow.auth.shared.dto.RegisterRequestDto;
+import com.orderflow.auth.shared.dto.RegisterRequestEmailDto;
+import com.orderflow.auth.shared.dto.RegisterResponseDto;
 import com.orderflow.auth.shared.service.AuthService;
-import com.orderflow.auth.shared.service.EmailVerificationService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthService authService;
-    private final EmailVerificationService emailVerificationService;
+
     @PostMapping("/register")
-    public ResponseEntity<RegisterResponseDto> register(@RequestBody RegisterRequestDto request) {
+    public ResponseEntity<RegisterResponseDto> register(@Valid @RequestBody RegisterRequestDto request) {
         return ResponseEntity.ok(authService.register(request));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponseDto> login(@RequestBody LoginRequestDto request) {
+    public ResponseEntity<AuthResponseDto> login(@Valid @RequestBody LoginRequestDto request) {
         return ResponseEntity.ok(authService.login(request));
     }
+
     @PostMapping("/verifycode")
-    public ResponseEntity<AuthResponseDto> verify(
-            @RequestBody RegisterRequestEmailDto request
-    ) {
+    public ResponseEntity<AuthResponseDto> verify(@Valid @RequestBody RegisterRequestEmailDto request) {
         return ResponseEntity.ok(authService.verify(request));
     }
-
 }
-
-
-

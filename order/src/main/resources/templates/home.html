@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Produtos</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #f4f5f7;
+            font-family: Arial, sans-serif;
+            color: #222;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            padding: 20px 40px;
+
+            background: #fff;
+            border-bottom: 1px solid #eee;
+        }
+
+        .logo {
+            font-size: 21px;
+            font-weight: bold;
+        }
+
+        .user-area {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .user-area a {
+            color: #222;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        main {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .title {
+            margin-bottom: 30px;
+        }
+
+        .title h1 {
+            margin-bottom: 8px;
+            font-size: 30px;
+        }
+
+        .title p {
+            color: #666;
+        }
+
+        .products {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+            gap: 22px;
+        }
+
+        .product {
+            padding: 20px;
+
+            background: #fff;
+            border-radius: 12px;
+
+            box-shadow: 0 5px 20px rgba(0, 0, 0, .06);
+        }
+
+        .product-image {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            height: 150px;
+            margin-bottom: 18px;
+
+            background: #f0f1f3;
+            border-radius: 9px;
+
+            font-size: 45px;
+        }
+
+        .product h2 {
+            margin-bottom: 8px;
+            font-size: 18px;
+        }
+
+        .description {
+            min-height: 40px;
+            margin-bottom: 15px;
+
+            color: #666;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .price {
+            margin-bottom: 15px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .buy-button {
+            width: 100%;
+            padding: 11px;
+
+            border: none;
+            border-radius: 7px;
+
+            background: #222;
+            color: white;
+
+            cursor: pointer;
+        }
+
+        .buy-button:hover {
+            background: #333;
+        }
+
+        @media (max-width: 600px) {
+            header {
+                padding: 18px 20px;
+            }
+
+            main {
+                padding-top: 25px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+
+    <div class="logo">
+        OrderFlow
+    </div>
+
+    <div class="user-area">
+        <a href="/orders">Meus pedidos</a>
+        <a href="/logout">Sair</a>
+    </div>
+
+</header>
+
+<main>
+
+    <div class="title">
+        <h1>Produtos</h1>
+        <p>Escolha um produto para adicionar ao seu pedido.</p>
+    </div>
+
+    <div class="products">
+
+        <div class="product">
+
+            <div class="product-image">
+                🎧
+            </div>
+
+            <h2>Fone Bluetooth</h2>
+
+            <p class="description">
+                Fone sem fio com cancelamento de ruído.
+            </p>
+
+            <p class="price">
+                R$ 199,90
+            </p>
+
+            <button class="buy-button">
+                Adicionar ao pedido
+            </button>
+
+        </div>
+
+
+        <div class="product">
+
+            <div class="product-image">
+                ⌨️
+            </div>
+
+            <h2>Teclado Mecânico</h2>
+
+            <p class="description">
+                Teclado mecânico compacto para produtividade.
+            </p>
+
+            <p class="price">
+                R$ 349,90
+            </p>
+
+            <button class="buy-button">
+                Adicionar ao pedido
+            </button>
+
+        </div>
+
+
+        <div class="product">
+
+            <div class="product-image">
+                🖱️
+            </div>
+
+            <h2>Mouse Gamer</h2>
+
+            <p class="description">
+                Mouse ergonômico com sensor de alta precisão.
+            </p>
+
+            <p class="price">
+                R$ 159,90
+            </p>
+
+            <button class="buy-button">
+                Adicionar ao pedido
+            </button>
+
+        </div>
+
+
+        <div class="product">
+
+            <div class="product-image">
+                🖥️
+            </div>
+
+            <h2>Monitor 24"</h2>
+
+            <p class="description">
+                Monitor Full HD de 24 polegadas.
+            </p>
+
+            <p class="price">
+                R$ 899,90
+            </p>
+
+            <button class="buy-button">
+                Adicionar ao pedido
+            </button>
+
+        </div>
+
+    </div>
+
+</main>
+
+</body>
+</html>
