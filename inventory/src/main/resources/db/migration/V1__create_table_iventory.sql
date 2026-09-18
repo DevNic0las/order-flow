@@ -6,5 +6,6 @@ CREATE TABLE inventory.tb_inventory
     product_name    VARCHAR(255) NOT NULL,
     quantity      INTEGER      NOT NULL,
     created_at    TIMESTAMP    NOT NULL DEFAULT now(),
-    updated_at    TIMESTAMP    NOT NULL DEFAULT now()
+    updated_at    TIMESTAMP    NOT NULL DEFAULT now(),
+    version INT NOT NULL DEFAULT 0
 );

@@ -27,6 +27,9 @@ public class Inventory {
 
   private LocalDateTime updatedAt;
 
+  @Version
+  private Integer version;
+
   @PrePersist
   public void prePersist() {
     this.createdAt = LocalDateTime.now();
