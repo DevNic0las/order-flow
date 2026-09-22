@@ -5,6 +5,8 @@ import com.orderflow.inventory.repository.InventoryRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.OptimisticLockException;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -50,6 +52,16 @@ class InventoryRepositoryIntegrationTest {
   private EntityManagerFactory entityManagerFactory;
 
 
+  private Long inventoryId;
+
+  @AfterEach()
+  void cleanUp(){
+    if (inventoryId != null) {
+      transactionTemplate.executeWithoutResult(status ->
+              inventoryRepository.deleteById(inventoryId));
+      inventoryId = null;
+    }
+  }
 
   @Test
   void shouldConnectToPostgres() {
@@ -67,6 +79,7 @@ class InventoryRepositoryIntegrationTest {
     assertNotNull(saved.getId());
     assertNotNull(saved.getVersion());
   }
+
   @Test
   void shouldIncrementVersionWhenUpdatingInventory() {
     Inventory inventory = new Inventory();
@@ -87,9 +100,10 @@ class InventoryRepositoryIntegrationTest {
     assertEquals(initialVersion + 1, updated.getVersion());
   }
 
-  @Test
-  void shouldPreventConcurrentUpdatesWithOptimisticLocking() throws InterruptedException {
 
+  @RepeatedTest(10)
+  @Transactional(propagation = Propagation.NOT_SUPPORTED)
+  void shouldPreventConcurrentUpdatesWithOptimisticLocking() throws InterruptedException {
     Inventory inventory = new Inventory();
     inventory.setProductName("Produto Concorrente");
     inventory.setQuantity(10);
@@ -101,7 +115,7 @@ class InventoryRepositoryIntegrationTest {
     EntityManager emB = entityManagerFactory.createEntityManager();
 
     CountDownLatch bothRead = new CountDownLatch(2);
-    CountDownLatch allowUpdate = new CountDownLatch(1);
+    AtomicReference<Exception> exceptionFromA = new AtomicReference<>();
     AtomicReference<Exception> exceptionFromB = new AtomicReference<>();
 
     Thread threadA = new Thread(() -> {
@@ -111,11 +125,15 @@ class InventoryRepositoryIntegrationTest {
 
       bothRead.countDown();
       await(bothRead);
-      allowUpdate.countDown();
 
       invA.setQuantity(8);
-      emA.flush();
-      emA.getTransaction().commit(); // só aqui a linha fica livre pro B
+      try {
+        emA.flush();
+        emA.getTransaction().commit();
+      } catch (Exception e) {
+        exceptionFromA.set(e);
+        emA.getTransaction().rollback();
+      }
     });
 
     Thread threadB = new Thread(() -> {
@@ -125,7 +143,6 @@ class InventoryRepositoryIntegrationTest {
 
       bothRead.countDown();
       await(bothRead);
-      await(allowUpdate);
 
       invB.setQuantity(5);
       try {
@@ -145,8 +162,19 @@ class InventoryRepositoryIntegrationTest {
     emA.close();
     emB.close();
 
-    assertNotNull(exceptionFromB.get());
-    assertInstanceOf(OptimisticLockException.class, exceptionFromB.get()); // opcional, mais preciso
+    // Exatamente uma das duas threads deve ter falhado com lock otimista
+    boolean aFailed = exceptionFromA.get() != null;
+    boolean bFailed = exceptionFromB.get() != null;
+
+    assertTrue(aFailed ^ bFailed, "Esperado que exatamente uma thread falhasse, mas aFailed=" + aFailed + " bFailed=" + bFailed);
+
+    Exception failure = aFailed ? exceptionFromA.get() : exceptionFromB.get();
+    assertInstanceOf(OptimisticLockException.class, failure);
+
+    Inventory result = inventoryRepository.findById(inventoryId).orElseThrow();
+    int expectedQuantity = aFailed ? 5 : 8; // quem não falhou é quem gravou
+    assertEquals(expectedQuantity, result.getQuantity());
+    assertEquals(1, result.getVersion());
   }
 
   private void await(CountDownLatch latch) {
@@ -157,6 +185,4 @@ class InventoryRepositoryIntegrationTest {
       throw new RuntimeException(e);
     }
   }
-
-
 }

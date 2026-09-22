@@ -8,9 +8,11 @@ import com.orderflow.inventory.exception.InventoryNotFoundException;
 import com.orderflow.inventory.messaging.InventoryPublisher;
 import com.orderflow.inventory.repository.InventoryRepository;
 
+import jakarta.persistence.LockModeType;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,6 +25,8 @@ public class InventoryService
   private final InventoryRepository inventoryRepository;
   private final InventoryPublisher inventoryPublisher;
 
+
+  @Transactional
   public void decreaseProductStock(Long orderId, Long productId, Integer quantity, String email) {
   if (quantity == null || quantity <= 0) {
     throw new InvalidInventoryQuantityException("Quantity must be greater than zero");
