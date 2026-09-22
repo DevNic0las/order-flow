@@ -23,7 +23,7 @@ public class InventoryConsumer {
   public void onOrderInventoryResult(InventoryEventDto event) {
     log.info("Received inventory result: {}", event);
     try {
-      inventoryService.decreaseProductStock(event.orderId(), event.productId(), event.quantity(), event.to());
+      inventoryService.decreaseProductStock(event.eventId(),event.orderId(), event.productId(), event.quantity(), event.to());
     } catch (OptimisticLockException | ObjectOptimisticLockingFailureException ex) {
       // Concurrency conflict detected. For now, send the message to DLQ by rejecting without requeue.
       log.warn("Optimistic locking conflict while processing inventory message for orderId={} productId={}: {}",

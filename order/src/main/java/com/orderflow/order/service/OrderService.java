@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -30,10 +32,11 @@ public class OrderService {
     order.setCustomerName(orderRequestDto.customerName());
     order.setProductId(orderRequestDto.productId());
     order.setQuantity(orderRequestDto.quantity());
-
+    UUID eventId = UUID.randomUUID();
     Order savedOrder = orderRepository.save(order);
 
     OrderEventDto orderEventDto = new OrderEventDto(
+            eventId,
             order.getId(),
             order.getProductId(),
             order.getQuantity(),
