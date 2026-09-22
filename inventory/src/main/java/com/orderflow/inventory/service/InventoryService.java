@@ -47,10 +47,11 @@ public class InventoryService
       );
     }
 
-    try {
-      processedInventoryEventRepository.saveAndFlush(new ProcessedInventoryEvent(eventId));
-    } catch (DataIntegrityViolationException ex) {
-      log.warn("Duplicate inventory event detected and ignored. eventId={}", eventId);
+    // Try to create a processed-event record idempotently using a DB upsert (INSERT ... ON CONFLICT DO NOTHING)
+    // insertIfNotExists returns number of rows inserted (1) or 0 if already present
+    int inserted = processedInventoryEventRepository.insertIfNotExists(eventId);
+    if (inserted == 0) {
+      log.info("Event already processed, ignoring. eventId={}", eventId);
       return;
     }
 

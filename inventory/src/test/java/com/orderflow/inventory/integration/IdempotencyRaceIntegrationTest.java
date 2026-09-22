@@ -40,7 +40,7 @@ class IdempotencyRaceIntegrationTest {
     registry.add("spring.datasource.url", postgres::getJdbcUrl);
     registry.add("spring.datasource.username", postgres::getUsername);
     registry.add("spring.datasource.password", postgres::getPassword);
-    registry.add("jwt.secret", () -> "01234567890123456789012345678901");
+    registry.add("jwt.secret", () -> "test-secret");
   }
 
   @Autowired
@@ -127,19 +127,11 @@ class IdempotencyRaceIntegrationTest {
     assertEquals(1, processed.size(), "Expected exactly one processed event");
     assertEquals(eventId, processed.get(0).getEventId());
 
-    // check exceptions
+    // check exceptions: with ON CONFLICT approach no thread should throw
     Throwable ex1 = t1Ex.get();
     Throwable ex2 = t2Ex.get();
 
-    // At least one thread should have thrown an exception (the loser)
-    assertTrue((ex1 != null) ^ (ex2 != null), "Expected exactly one thread to observe an exception");
-
-    Throwable loserEx = ex1 != null ? ex1 : ex2;
-    // The loser should have observed a transactional rollback (UnexpectedRollbackException or DataIntegrityViolationException)
-    assertNotNull(loserEx, "Loser exception should not be null");
-
-    // Print types for debugging in case assertions need relax
-    System.out.println("Thread1 exception: " + (ex1 == null ? "<none>" : ex1.getClass() + ": " + ex1.getMessage()));
-    System.out.println("Thread2 exception: " + (ex2 == null ? "<none>" : ex2.getClass() + ": " + ex2.getMessage()));
+    assertNull(ex1, "Thread1 should not have thrown");
+    assertNull(ex2, "Thread2 should not have thrown");
   }
 }

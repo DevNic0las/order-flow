@@ -65,13 +65,12 @@ class InventoryServiceTest {
    @Test
    void shouldDecreaseProductWhenStockIsSufficient() {
        when(processedInventoryEventRepository.existsByEventId(eventId)).thenReturn(false);
+       when(processedInventoryEventRepository.insertIfNotExists(eventId)).thenReturn(1);
        when(inventoryRepository.findById(1L)).thenReturn(Optional.of(inventory));
 
        inventoryService.decreaseProductStock(eventId, 99L, 1L, 3, "teste@gmail.com");
 
-       ArgumentCaptor<ProcessedInventoryEvent> processedEventCaptor = ArgumentCaptor.forClass(ProcessedInventoryEvent.class);
-       verify(processedInventoryEventRepository).saveAndFlush(processedEventCaptor.capture());
-       assertEquals(eventId, processedEventCaptor.getValue().getEventId());
+       verify(processedInventoryEventRepository).insertIfNotExists(eventId);
 
        ArgumentCaptor<Inventory> savedInventoryCaptor = ArgumentCaptor.forClass(Inventory.class);
        verify(inventoryRepository).save(savedInventoryCaptor.capture());
@@ -93,13 +92,14 @@ class InventoryServiceTest {
    @Test
    void shouldRejectInsufficientStockWithoutChangingInventory() {
        when(processedInventoryEventRepository.existsByEventId(eventId)).thenReturn(false);
+       when(processedInventoryEventRepository.insertIfNotExists(eventId)).thenReturn(1);
        when(inventoryRepository.findById(1L)).thenReturn(Optional.of(inventory));
 
        inventoryService.decreaseProductStock(eventId, 99L, 1L, 15, "teste@gmail.com");
 
        assertEquals(10, inventory.getQuantity());
        verify(inventoryRepository, never()).save(any(Inventory.class));
-       verify(processedInventoryEventRepository).saveAndFlush(any(ProcessedInventoryEvent.class));
+       verify(processedInventoryEventRepository).insertIfNotExists(eventId);
 
        ArgumentCaptor<InventoryResultEventDto> eventCaptor = ArgumentCaptor.forClass(InventoryResultEventDto.class);
        verify(inventoryPublisher).publishInventoryResult(eventCaptor.capture());
@@ -116,7 +116,7 @@ class InventoryServiceTest {
 
        inventoryService.decreaseProductStock(eventId, 99L, 1L, 3, "teste@gmail.com");
 
-       verify(processedInventoryEventRepository, never()).saveAndFlush(any(ProcessedInventoryEvent.class));
+       verify(processedInventoryEventRepository, never()).insertIfNotExists(any());
        verify(inventoryRepository, never()).findById(any());
        verify(inventoryPublisher, never()).publishInventoryResult(any(InventoryResultEventDto.class));
    }
@@ -124,7 +124,7 @@ class InventoryServiceTest {
    @Test
    void shouldIgnoreConcurrentDuplicateEvent() {
        when(processedInventoryEventRepository.existsByEventId(eventId)).thenReturn(false);
-       doThrow(new DataIntegrityViolationException("duplicate")).when(processedInventoryEventRepository).saveAndFlush(any(ProcessedInventoryEvent.class));
+       when(processedInventoryEventRepository.insertIfNotExists(eventId)).thenReturn(0);
 
        inventoryService.decreaseProductStock(eventId, 99L, 1L, 3, "teste@gmail.com");
 
@@ -135,6 +135,7 @@ class InventoryServiceTest {
    @Test
    void shouldThrowWhenProductNotFound() {
        when(processedInventoryEventRepository.existsByEventId(eventId)).thenReturn(false);
+       when(processedInventoryEventRepository.insertIfNotExists(eventId)).thenReturn(1);
        when(inventoryRepository.findById(10L)).thenReturn(Optional.empty());
 
        InventoryNotFoundException exception = assertThrows(
@@ -156,7 +157,7 @@ class InventoryServiceTest {
 
        assertEquals("Quantity must be greater than zero", exception.getMessage());
        verify(processedInventoryEventRepository).existsByEventId(eventId);
-       verify(processedInventoryEventRepository, never()).saveAndFlush(any(ProcessedInventoryEvent.class));
+       verify(processedInventoryEventRepository, never()).insertIfNotExists(any());
        verifyNoInteractions(inventoryRepository);
        verifyNoInteractions(inventoryPublisher);
    }
