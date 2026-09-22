@@ -8,19 +8,21 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.Optional;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.orderflow.order.domain.Order;
 import com.orderflow.order.domain.OrderStatus;
-import com.orderflow.order.dtos.OrderEventDto;
 import com.orderflow.order.dtos.OrderRequestDto;
 import com.orderflow.order.dtos.OrderResponseDto;
 import com.orderflow.order.exception.OrderNotFoundException;
 import com.orderflow.order.messaging.OrderPublisher;
+import com.orderflow.order.outbox.OutboxEvent;
+import com.orderflow.order.outbox.OutboxEventRepository;
+import com.orderflow.order.outbox.OutboxEventStatus;
 import com.orderflow.order.repository.OrderRepository;
-import com.orderflow.order.service.OrderService;
 import com.orderflow.order.service.mapper.OrderMapper;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
-import com.orderflow.order.domain.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -43,6 +45,12 @@ class OrderServiceTest {
     @Mock
     private OrderRepository orderRepository;
 
+    @Mock
+    private OutboxEventRepository outboxEventRepository;
+
+    @Mock
+    private ObjectMapper objectMapper;
+
     private OrderRequestDto orderRequestDto;
     private Order order;
 
@@ -59,9 +67,10 @@ class OrderServiceTest {
     }
 
     @Test
-    void shouldCreateOrderAndPublishEvent() {
+    void shouldCreateOrderAndPersistOutboxEvent() throws JsonProcessingException {
         when(orderRepository.save(any(Order.class))).thenReturn(order);
         when(orderMapper.toResponseDto(order)).thenReturn(new OrderResponseDto(order.getId(), order.getCustomerName(), order.getProductId(), order.getQuantity(), order.getStatus().name(), null));
+        when(objectMapper.writeValueAsString(any())).thenReturn("{\"eventId\":\"123e4567-e89b-12d3-a456-426614174000\"}");
 
         OrderResponseDto result = orderService.createOrder(orderRequestDto, "teste@gmail.com");
 
@@ -69,7 +78,8 @@ class OrderServiceTest {
         assertEquals(order.getId(), result.id());
         assertEquals(order.getCustomerName(), result.customerName());
         verify(orderRepository).save(any(Order.class));
-        verify(orderPublisher).publishOrder(any(OrderEventDto.class));
+        verify(outboxEventRepository).save(any(OutboxEvent.class));
+        verify(orderPublisher, org.mockito.Mockito.never()).publishOrder(any());
     }
 
     @Test

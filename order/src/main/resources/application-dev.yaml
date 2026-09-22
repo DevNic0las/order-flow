@@ -28,9 +28,9 @@ spring:
     username: guest
     password: guest
 
-  jwt:
-    secret: ${JWT_SECRET}
-    duration: 3600000
+jwt:
+  secret: ${JWT_SECRET:orderflow-dev-secret-key-32bytes-123456}
+  duration: 3600000
 
 management:
   endpoints:

@@ -88,7 +88,7 @@ public class InventoryService
     }
 
     InventoryResultEventDto result =
-            new InventoryResultEventDto(orderId, approved, email);
+            new InventoryResultEventDto(orderId, approved, email, eventId);
 
     inventoryPublisher.publishInventoryResult(result);
   }
