@@ -28,7 +28,7 @@ public class NotificationVerificationConsumer {
     } catch (AmqpRejectAndDontRequeueException ex) {
       throw ex;
     } catch (Exception ex) {
-      log.error("Failed to process email verification for to={}: {}", maskEmail(event.to()), ex.getMessage());
+      log.error("Failed to process email verification for to={}", maskEmail(event.to()), ex);
       throw ex;
     }
   }

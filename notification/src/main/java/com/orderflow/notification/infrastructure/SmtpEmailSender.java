@@ -39,7 +39,7 @@ public class SmtpEmailSender implements EmailSender {
             mailSender.send(message);
             log.info("Email successfully sent via SMTP to {}", maskEmail(event.to()));
         } catch (Exception ex) {
-            log.error("Failed to send email via SMTP to {}: {}", maskEmail(event.to()), ex.getMessage());
+            log.error("Failed to send email via SMTP to {}", maskEmail(event.to()), ex);
             throw ex;
         }
     }

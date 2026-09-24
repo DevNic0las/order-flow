@@ -29,7 +29,7 @@ public class NotificationConsumer {
         } catch (AmqpRejectAndDontRequeueException ex) {
             throw ex;
         } catch (Exception ex) {
-            log.error("Failed to process notification for orderId={}: {}", event.orderId(), ex.getMessage());
+            log.error("Failed to process notification for orderId={}", event.orderId(), ex);
             throw ex;
         }
     }

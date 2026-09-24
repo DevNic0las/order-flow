@@ -73,7 +73,7 @@ public class BrevoEmailSender implements EmailSender {
                     ex.getStatusCode(), ex.getResponseBodyAsString());
             throw ex;
         } catch (Exception ex) {
-            log.error("Failed to send email via Brevo to {}: {}", maskEmail(event.to()), ex.getMessage());
+            log.error("Failed to send email via Brevo to {}", maskEmail(event.to()), ex);
             throw ex;
         }
     }

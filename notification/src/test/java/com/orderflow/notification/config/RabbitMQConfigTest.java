@@ -28,12 +28,17 @@ class RabbitMQConfigTest {
         assertEquals("email.verification.queue", emailVerificationQueue.getName());
         assertTrue(emailVerificationQueue.isDurable());
         assertEquals("dlq.exchange", emailVerificationQueue.getArguments().get("x-dead-letter-exchange"));
-        assertEquals("notification.dlq", emailVerificationQueue.getArguments().get("x-dead-letter-routing-key"));
+        assertEquals("email.verification.dlq", emailVerificationQueue.getArguments().get("x-dead-letter-routing-key"));
 
         Queue dlq = config.notificationDlq();
         assertNotNull(dlq);
         assertEquals("notification.dlq", dlq.getName());
         assertTrue(dlq.isDurable());
+
+        Queue emailVerificationDlq = config.emailVerificationDlq();
+        assertNotNull(emailVerificationDlq);
+        assertEquals("email.verification.dlq", emailVerificationDlq.getName());
+        assertTrue(emailVerificationDlq.isDurable());
     }
 
     @Test
@@ -71,5 +76,11 @@ class RabbitMQConfigTest {
         assertEquals("notification.dlq", dlqBinding.getDestination());
         assertEquals("dlq.exchange", dlqBinding.getExchange());
         assertEquals("notification.dlq", dlqBinding.getRoutingKey());
+
+        Binding emailVerificationDlqBinding = config.emailVerificationDlqBinding();
+        assertNotNull(emailVerificationDlqBinding);
+        assertEquals("email.verification.dlq", emailVerificationDlqBinding.getDestination());
+        assertEquals("dlq.exchange", emailVerificationDlqBinding.getExchange());
+        assertEquals("email.verification.dlq", emailVerificationDlqBinding.getRoutingKey());
     }
 }

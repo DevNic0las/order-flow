@@ -16,6 +16,10 @@ public class NotificationService {
   private final EmailSender emailSender;
 
   public void processNotification(NotificationEventDto event) {
+    if (event.to() == null || event.to().isBlank() || event.orderId() == null) {
+      throw new IllegalArgumentException("Invalid notification event: to/orderId must not be null");
+    }
+
     String subject = event.approved() ? "Pedido aprovado!" : "Pedido reprovado";
     String body = event.approved()
             ? "Seu pedido: " + event.orderId() + " foi aprovado!"
@@ -30,6 +34,10 @@ public class NotificationService {
   }
 
   public void processEmailVerification(NotificationEmailVerification event) {
+    if (event.to() == null || event.to().isBlank() || event.code() == null || event.code().isBlank()) {
+      throw new IllegalArgumentException("Invalid email verification event: to/code must not be null");
+    }
+
     NotificationEventEmailDto notificationEventEmailDto = new NotificationEventEmailDto(
             event.to(),
             "Verificação de e-mail",

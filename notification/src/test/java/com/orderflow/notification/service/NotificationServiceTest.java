@@ -16,6 +16,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class NotificationServiceTest {
@@ -80,5 +81,41 @@ class NotificationServiceTest {
         assertEquals("user@example.com", sentEmail.to());
         assertEquals("Verificação de e-mail", sentEmail.subject());
         assertTrue(sentEmail.body().contains("987654"));
+    }
+
+    @Test
+    @DisplayName("Should reject notification event with null recipient instead of sending malformed email")
+    void shouldRejectNotificationWithNullRecipient() {
+        NotificationEventDto event = new NotificationEventDto(123L, true, null, UUID.randomUUID());
+
+        assertThrows(IllegalArgumentException.class, () -> notificationService.processNotification(event));
+        verifyNoInteractions(emailSender);
+    }
+
+    @Test
+    @DisplayName("Should reject notification event with null orderId instead of sending malformed email")
+    void shouldRejectNotificationWithNullOrderId() {
+        NotificationEventDto event = new NotificationEventDto(null, true, "customer@example.com", UUID.randomUUID());
+
+        assertThrows(IllegalArgumentException.class, () -> notificationService.processNotification(event));
+        verifyNoInteractions(emailSender);
+    }
+
+    @Test
+    @DisplayName("Should reject email verification event with null code instead of sending malformed email")
+    void shouldRejectVerificationWithNullCode() {
+        NotificationEmailVerification event = new NotificationEmailVerification(null, "user@example.com");
+
+        assertThrows(IllegalArgumentException.class, () -> notificationService.processEmailVerification(event));
+        verifyNoInteractions(emailSender);
+    }
+
+    @Test
+    @DisplayName("Should reject email verification event with null recipient instead of sending malformed email")
+    void shouldRejectVerificationWithNullRecipient() {
+        NotificationEmailVerification event = new NotificationEmailVerification("987654", null);
+
+        assertThrows(IllegalArgumentException.class, () -> notificationService.processEmailVerification(event));
+        verifyNoInteractions(emailSender);
     }
 }
