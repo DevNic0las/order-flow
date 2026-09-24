@@ -1,8 +1,5 @@
+
 spring:
-  datasource:
-    url: ${DATABASE_URL}
-    username: ${DATABASE_USER}
-    password: ${DATABASE_PASSWORD}
   rabbitmq:
     addresses: ${RABBITMQ_URL}
     listener:
@@ -10,12 +7,21 @@ spring:
         retry:
           enabled: true
           max-attempts: 3
-          initial-interval: 20000
+          initial-interval: 1000
           multiplier: 2.0
-          max-interval: 100000
-        default-requeue-rejected: true
+          max-interval: 10000
+        default-requeue-rejected: false
     ssl:
       enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  metrics:
+    tags:
+      application: notification-service
 
 brevo:
     api-key: ${BREVO_API_KEY}

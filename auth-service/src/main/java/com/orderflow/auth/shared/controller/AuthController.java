@@ -5,6 +5,8 @@ import com.orderflow.auth.shared.dto.LoginRequestDto;
 import com.orderflow.auth.shared.dto.RegisterRequestDto;
 import com.orderflow.auth.shared.dto.RegisterRequestEmailDto;
 import com.orderflow.auth.shared.dto.RegisterResponseDto;
+import com.orderflow.auth.shared.dto.ResendCodeRequestDto;
+import com.orderflow.auth.shared.dto.ResendCodeResponseDto;
 import com.orderflow.auth.shared.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -32,4 +34,13 @@ public class AuthController {
     public ResponseEntity<AuthResponseDto> verify(@Valid @RequestBody RegisterRequestEmailDto request) {
         return ResponseEntity.ok(authService.verify(request));
     }
+
+
+    @PostMapping("/resend-code")
+    public ResponseEntity<ResendCodeResponseDto> resendCode(@Valid @RequestBody ResendCodeRequestDto request) {
+        return ResponseEntity.ok(authService.resendCode(request));
+    }
+
+
+
 }

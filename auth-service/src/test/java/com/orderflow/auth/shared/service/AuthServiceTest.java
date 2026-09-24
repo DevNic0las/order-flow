@@ -3,12 +3,7 @@ package com.orderflow.auth.shared.service;
 import com.orderflow.auth.shared.domain.EmailVerification;
 import com.orderflow.auth.shared.domain.Role;
 import com.orderflow.auth.shared.domain.User;
-import com.orderflow.auth.shared.dto.AuthResponseDto;
-import com.orderflow.auth.shared.dto.EmailVerificationEventDto;
-import com.orderflow.auth.shared.dto.LoginRequestDto;
-import com.orderflow.auth.shared.dto.RegisterRequestDto;
-import com.orderflow.auth.shared.dto.RegisterRequestEmailDto;
-import com.orderflow.auth.shared.dto.RegisterResponseDto;
+import com.orderflow.auth.shared.dto.*;
 import com.orderflow.auth.shared.exception.EmailAlreadyExistsException;
 import com.orderflow.auth.shared.exception.InvalidCredentialsException;
 import com.orderflow.auth.shared.exception.InvalidRequestException;
@@ -28,6 +23,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -278,5 +274,39 @@ class AuthServiceTest {
         assertThatThrownBy(() -> authService.login(request))
                 .isInstanceOf(InvalidCredentialsException.class)
                 .hasMessage("Invalid credentials");
+    }
+
+    @Test
+    void shouldResendVerificationCodeSuccessfully() {
+        User user = User.builder()
+                .email("john@example.com")
+                .password("hashed")
+                .userName("john")
+                .role(Role.CUSTOMER)
+                .build();
+        EmailVerification verification = EmailVerification.builder()
+                .user(user)
+                .verificationCode("111111")
+                .token("token-123")
+                .verified(false)
+                .build();
+
+        when(emailVerificationService.resendVerification("token-123")).thenReturn(verification);
+
+        ResendCodeResponseDto response = authService.resendCode(new ResendCodeRequestDto(UUID.randomUUID().toString()));
+
+        assertThat(response).isEqualTo("token-123");
+
+        ArgumentCaptor<EmailVerificationEventDto> eventCaptor = ArgumentCaptor.forClass(EmailVerificationEventDto.class);
+        verify(emailVerificationProducer).send(eventCaptor.capture());
+        assertThat(eventCaptor.getValue().to()).isEqualTo("john@example.com");
+        assertThat(eventCaptor.getValue().code()).isEqualTo("111111");
+    }
+
+    @Test
+    void shouldRejectResendWhenTokenIsBlank() {
+        assertThatThrownBy(() -> authService.resendCode(new ResendCodeRequestDto(UUID.randomUUID().toString()   )))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessage("Token is required");
     }
 }

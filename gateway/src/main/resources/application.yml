@@ -24,6 +24,7 @@ spring:
           predicates:
             - Path=/auth/**
 
+
 management:
   endpoints:
     web:

@@ -1,4 +1,4 @@
-```html
+
 <html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
 
 <head>
@@ -186,9 +186,7 @@
 
     <p class="resend">
         Não recebeu o código?
-        <a href="/auth/resend-code">
-            Enviar novamente
-        </a>
+        <a href="#" id="resendLink">Enviar novamente</a>
     </p>
 
 </div>
@@ -198,7 +196,51 @@
     const codeInput = document.getElementById("code");
     const tokenInput = document.getElementById("verificationToken");
     const verifyButton = document.getElementById("verifyButton");
+    const resendLink = document.getElementById("resendLink");
     const message = document.getElementById("message");
+
+    resendLink.addEventListener("click", async (event) => {
+        event.preventDefault();
+        const token = tokenInput.value;
+        console.log(token)
+        if (!token) {
+            showError("Token de verificação não encontrado.");
+            return;
+        }
+
+        clearMessage();
+        resendLink.textContent = "Enviando...";
+        resendLink.style.pointerEvents = "none";
+
+        try {
+            const response = await fetch("/auth/resend-code", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ token: token })
+            });
+
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                showError(data.message || "Não foi possível reenviar o código.");
+                return;
+            }
+
+            if (data.token) {
+                tokenInput.value = data.token;
+            }
+
+            showSuccess("Novo código enviado para o seu e-mail.");
+        } catch (error) {
+            console.error(error);
+            showError("Não foi possível reenviar o código.");
+        } finally {
+            resendLink.textContent = "Enviar novamente";
+            resendLink.style.pointerEvents = "auto";
+        }
+    });
 
     form.addEventListener("submit", async (event) => {
         event.preventDefault();
@@ -233,7 +275,7 @@
             });
 
             const data = await response.json();
-
+            console.log(data)
             if (!response.ok) {
                 showError(data.message || "Não foi possível verificar o código.");
                 return;
@@ -277,4 +319,4 @@
 
 </body>
 </html>
-```
+

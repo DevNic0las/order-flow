@@ -77,6 +77,25 @@ public class EmailVerificationService {
         return verification.getUser();
     }
 
+    public EmailVerification resendVerification(String token) {
+        if (token == null || token.isBlank()) {
+            throw new InvalidVerificationTokenException("Verification token is required");
+        }
+
+        EmailVerification verification = repository.findByToken(token)
+                .orElseThrow(() -> new InvalidVerificationTokenException("Invalid verification token"));
+
+        if (verification.isVerified()) {
+            throw new EmailAlreadyVerifiedException("Email already verified");
+        }
+
+        verification.setVerificationCode(generateCode());
+        verification.setExpirationAt(LocalDateTime.now().plusMinutes(10));
+        repository.save(verification);
+
+        return verification;
+    }
+
     private String generateCode() {
         return String.valueOf(
                 ThreadLocalRandom.current()

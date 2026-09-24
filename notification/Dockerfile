@@ -5,8 +5,9 @@ COPY pom.xml .
 COPY order/pom.xml order/
 COPY inventory/pom.xml inventory/
 COPY notification/pom.xml notification/
-COPY auth/pom.xml auth/
-COPY auth/src auth/src
+COPY auth-service/pom.xml auth-service/
+COPY auth-security/pom.xml auth-security/
+COPY gateway/pom.xml gateway/
 RUN mvn -pl notification -am dependency:go-offline -q
 
 COPY notification/src notification/src

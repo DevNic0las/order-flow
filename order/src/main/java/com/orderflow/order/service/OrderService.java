@@ -12,6 +12,7 @@ import com.orderflow.order.outbox.OutboxEvent;
 import com.orderflow.order.outbox.OutboxEventStatus;
 import com.orderflow.order.outbox.OutboxEventRepository;
 import com.orderflow.order.repository.OrderRepository;
+import com.orderflow.order.repository.ProcessedOrderResultEventRepository;
 import com.orderflow.order.service.mapper.OrderMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,7 @@ public class OrderService {
   private final OrderRepository orderRepository;
   private final OutboxEventRepository outboxEventRepository;
   private final ObjectMapper objectMapper;
+  private final ProcessedOrderResultEventRepository processedOrderResultEventRepository;
 
   @Transactional
   public OrderResponseDto createOrder(OrderRequestDto orderRequestDto, String userId){
@@ -67,6 +69,24 @@ public class OrderService {
     outboxEventRepository.save(outboxEvent);
 
     return orderMapper.toResponseDto(savedOrder);
+  }
+
+  @Transactional
+  public void processOrderResult(UUID eventId, Long orderId, boolean approved) {
+
+    int inserted = processedOrderResultEventRepository
+            .insertIfNotExists(eventId);
+
+    if (inserted == 0) {
+      log.info("Event already processed, ignoring. eventId={}", eventId);
+      return;
+    }
+
+    if (approved) {
+      confirmOrder(orderId);
+    } else {
+      rejectOrder(orderId);
+    }
   }
 
   @Transactional
