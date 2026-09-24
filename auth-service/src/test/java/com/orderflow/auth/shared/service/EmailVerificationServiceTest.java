@@ -21,8 +21,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class EmailVerificationServiceTest {
@@ -161,4 +160,49 @@ class EmailVerificationServiceTest {
                 .isInstanceOf(InvalidVerificationCodeException.class)
                 .hasMessage("Verification code is required");
     }
+
+    @Test
+    void shouldResendVerificationCodeSuccessfully() {
+        User user = User.builder()
+                .email("john@example.com")
+                .password("hashed")
+                .userName("john")
+                .role(Role.CUSTOMER)
+                .build();
+        EmailVerification verification = EmailVerification.builder()
+                .user(user)
+                .verificationCode("123456")
+                .token("refresh-token")
+                .expirationAt(LocalDateTime.now().plusMinutes(2))
+                .verified(false)
+                .build();
+
+        when(repository.findByToken("refresh-token")).thenReturn(Optional.of(verification));
+
+        EmailVerification result = service.resendVerification("refresh-token");
+
+        assertThat(result).isEqualTo(verification);
+        assertThat(result.getVerificationCode()).isNotBlank();
+        assertThat(result.getVerificationCode()).isNotEqualTo("123456");
+        assertThat(result.getExpirationAt()).isAfter(LocalDateTime.now());
+
+        ArgumentCaptor<EmailVerification> verificationCaptor = ArgumentCaptor.forClass(EmailVerification.class);
+        verify(repository).save(verificationCaptor.capture());
+        assertThat(verificationCaptor.getValue()).isEqualTo(verification);
+    }
+
+    @Test
+    void shouldRejectWhenTokenIsInvalid() {
+        when(repository.findByToken("invalid-token"))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.resendVerification("invalid-token"))
+                .isInstanceOf(InvalidVerificationTokenException.class)
+                .hasMessage("Invalid verification token");
+
+        verify(repository, never()).save(any());
+    }
+
+
+
 }

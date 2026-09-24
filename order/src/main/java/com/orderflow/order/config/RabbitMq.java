@@ -14,21 +14,13 @@ public class RabbitMq {
   public static final String ORDER_EXCHANGE       = "order.exchange";
   public static final String ORDER_RESULT_EXCHANGE = "order.result.exchange";
   public static final String DLQ_EXCHANGE         = "dlq.exchange";
-  public static final String NOTIFICATION_EXCHANGE =
-          "notification.exchange";
   // --- Routing Keys ---
   public static final String RK_INVENTORY   = "rk.inventory";
-  public static final String RK_NOTIFICATION = "rk.notification";
-  public static final String RK_EMAIL_VERIFICATION = "rk.email.verification";
   // --- Queues ---
   public static final String INVENTORY_QUEUE    = "inventory.queue";
-  public static final String NOTIFICATION_QUEUE = "notification.queue";
   public static final String ORDER_RESULT_QUEUE = "order.result.queue";
-  public static final String INVENTORY_DLQ      = "inventory.dlq";
-  public static final String NOTIFICATION_DLQ   = "notification.dlq";
-  public static final String EMAIL_VERIFICATION_QUEUE = "email.verification.queue";
-  public static final String EMAIL_VERIFICATION_DLQ =
-          "email.verification.dlq";
+  public static final String ORDER_RESULT_DLQ = "order.result.dlq";
+  public static final String INVENTORY_DLQ = "inventory.dlq";
   // ---- Exchanges ----
 
   @Bean
@@ -39,11 +31,6 @@ public class RabbitMq {
   @Bean
   public FanoutExchange orderResultExchange() {
     return new FanoutExchange(ORDER_RESULT_EXCHANGE);
-  }
-
-  @Bean
-  public DirectExchange notificationExchange() {
-    return new DirectExchange(NOTIFICATION_EXCHANGE);
   }
 
   @Bean
@@ -62,32 +49,11 @@ public class RabbitMq {
   }
 
   @Bean
-  public Queue notificationQueue() {
-    return QueueBuilder.durable(NOTIFICATION_QUEUE)
-            .withArgument("x-dead-letter-exchange", DLQ_EXCHANGE)
-            .withArgument("x-dead-letter-routing-key", NOTIFICATION_DLQ)
-            .build();
-  }
-
-  @Bean
-  public Queue emailVerificationQueue() {
-    return QueueBuilder.durable(EMAIL_VERIFICATION_QUEUE)
-            .withArgument("x-dead-letter-exchange", DLQ_EXCHANGE)
-            .withArgument("x-dead-letter-routing-key", EMAIL_VERIFICATION_DLQ)
-            .build();
-  }
-
-
-  @Bean
-  public Queue emailVerificationDlq() {
-    return QueueBuilder
-            .durable(EMAIL_VERIFICATION_DLQ)
-            .build();
-  }
-
-  @Bean
   public Queue orderResultQueue() {
-    return QueueBuilder.durable(ORDER_RESULT_QUEUE).build();
+    return QueueBuilder.durable(ORDER_RESULT_QUEUE)
+            .withArgument("x-dead-letter-exchange", DLQ_EXCHANGE)
+            .withArgument("x-dead-letter-routing-key", ORDER_RESULT_DLQ)
+            .build();
   }
 
   // ---- DLQs ----
@@ -98,8 +64,8 @@ public class RabbitMq {
   }
 
   @Bean
-  public Queue notificationDlq() {
-    return QueueBuilder.durable(NOTIFICATION_DLQ).build();
+  public Queue orderResultDlq() {
+    return QueueBuilder.durable(ORDER_RESULT_DLQ).build();
   }
 
   // ---- Bindings ----
@@ -109,13 +75,6 @@ public class RabbitMq {
     return BindingBuilder.bind(inventoryQueue())
             .to(orderExchange())
             .with(RK_INVENTORY);
-  }
-
-  @Bean
-  public Binding notificationBinding() {
-    return BindingBuilder.bind(notificationQueue())
-            .to(orderResultExchange());
-
   }
 
   @Bean
@@ -132,25 +91,10 @@ public class RabbitMq {
   }
 
   @Bean
-  public Binding notificationDlqBinding() {
-    return BindingBuilder.bind(notificationDlq())
+  public Binding orderResultDlqBinding() {
+    return BindingBuilder.bind(orderResultDlq())
             .to(dlqExchange())
-            .with(NOTIFICATION_DLQ);
-  }
-
-  @Bean
-  public Binding emailVerificationBinding() {
-    return BindingBuilder
-            .bind(emailVerificationQueue())
-            .to(notificationExchange())
-            .with(RK_EMAIL_VERIFICATION);
-  }
-  @Bean
-  public Binding emailVerificationDlqBinding() {
-    return BindingBuilder
-            .bind(emailVerificationDlq())
-            .to(dlqExchange())
-            .with(EMAIL_VERIFICATION_DLQ);
+            .with(ORDER_RESULT_DLQ);
   }
 
   // ---- Serialização JSON ----

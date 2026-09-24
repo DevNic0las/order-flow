@@ -44,6 +44,7 @@ public class SecurityConfig{
                             "/verifycode/email",
                             "/verifycode",
                             "/register/form",
+                            "/resend-code",
                             "/error"
                     ).permitAll()
                     .anyRequest().authenticated()

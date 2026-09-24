@@ -113,4 +113,22 @@ public class AuthService {
         User user = emailVerificationService.verify(request.token(), request.code());
         return new AuthResponseDto(jwtService.generateToken(user));
     }
+
+    public ResendCodeResponseDto resendCode(ResendCodeRequestDto request) {
+        if (request == null) {
+            throw new InvalidRequestException("Request body is required");
+        }
+
+
+        EmailVerification verification = emailVerificationService.resendVerification(request.token());
+        emailVerificationProducer.send(new EmailVerificationEventDto(
+                verification.getUser().getEmail(),
+                verification.getVerificationCode()
+        ));
+
+        return new ResendCodeResponseDto(verification.getToken());
+    }
+
+
+
 }

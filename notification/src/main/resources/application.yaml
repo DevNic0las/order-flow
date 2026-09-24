@@ -1,6 +1,21 @@
 spring:
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
+  application:
+    name: notification-service
+  rabbitmq:
+    listener:
+      simple:
+        concurrency: 3
+        max-concurrency: 10
+        prefetch: 10
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 1000
+          multiplier: 2.0
+          max-interval: 10000
+        default-requeue-rejected: false
 
 server:
   port: 8083

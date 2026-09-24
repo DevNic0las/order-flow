@@ -7,5 +7,6 @@ CREATE TABLE email_verification.tb_email_verification (
                                                           verification_code VARCHAR(6) NOT NULL,
                                                           expiration_at TIMESTAMP NOT NULL,
                                                           verified BOOLEAN NOT NULL DEFAULT FALSE,
-                                                        token VARCHAR(255) NOT NULL
+                                                        token VARCHAR(255) NOT NULL,
+                                                        last_send_at TIMESTAMP NOT NULL
 );

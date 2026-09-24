@@ -2,11 +2,7 @@ package com.orderflow.auth.shared.service;
 
 import com.orderflow.auth.shared.domain.EmailVerification;
 import com.orderflow.auth.shared.domain.User;
-import com.orderflow.auth.shared.exception.EmailAlreadyVerifiedException;
-import com.orderflow.auth.shared.exception.InvalidRequestException;
-import com.orderflow.auth.shared.exception.InvalidVerificationCodeException;
-import com.orderflow.auth.shared.exception.InvalidVerificationTokenException;
-import com.orderflow.auth.shared.exception.VerificationCodeExpiredException;
+import com.orderflow.auth.shared.exception.*;
 import com.orderflow.auth.shared.repository.EmailVerificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -75,6 +71,35 @@ public class EmailVerificationService {
         repository.save(verification);
 
         return verification.getUser();
+    }
+
+    public EmailVerification resendVerification(String token) {
+        if (token == null || token.isBlank()) {
+            throw new InvalidVerificationTokenException("Verification token is required");
+        }
+
+        EmailVerification verification = repository.findByToken(token)
+                .orElseThrow(() ->
+                        new InvalidVerificationTokenException("Invalid verification token"));
+
+        if (verification.isVerified()) {
+            throw new EmailAlreadyVerifiedException("Email already verified");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+
+        if (verification.getLastSentAt() != null
+                && verification.getLastSentAt().plusMinutes(1).isAfter(now)) {
+            throw new VerificationCooldownException(
+                    "Please wait before requesting another verification code"
+            );
+        }
+
+        verification.setVerificationCode(generateCode());
+        verification.setExpirationAt(now.plusMinutes(10));
+        verification.setLastSentAt(now);
+
+        return repository.save(verification);
     }
 
     private String generateCode() {

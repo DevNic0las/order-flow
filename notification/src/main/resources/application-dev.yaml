@@ -1,6 +1,5 @@
 spring:
-  application:
-    name: notification-service
+
   mail:
     host: localhost
     port: 1025
@@ -16,9 +15,6 @@ spring:
     username: guest
     password: guest
 
-  jwt:
-    secret: ${JWT_SECRET}
-    duration: 3600000
 
 management:
   endpoints:
@@ -28,5 +24,3 @@ management:
   metrics:
     tags:
       application: notification-service
-server:
-  port: 8082
