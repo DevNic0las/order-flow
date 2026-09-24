@@ -21,8 +21,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class EmailVerificationServiceTest {
@@ -191,4 +190,19 @@ class EmailVerificationServiceTest {
         verify(repository).save(verificationCaptor.capture());
         assertThat(verificationCaptor.getValue()).isEqualTo(verification);
     }
+
+    @Test
+    void shouldRejectWhenTokenIsInvalid() {
+        when(repository.findByToken("invalid-token"))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.resendVerification("invalid-token"))
+                .isInstanceOf(InvalidVerificationTokenException.class)
+                .hasMessage("Invalid verification token");
+
+        verify(repository, never()).save(any());
+    }
+
+
+
 }

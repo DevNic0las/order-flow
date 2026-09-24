@@ -119,6 +119,7 @@ public class AuthService {
             throw new InvalidRequestException("Request body is required");
         }
 
+
         EmailVerification verification = emailVerificationService.resendVerification(request.token());
         emailVerificationProducer.send(new EmailVerificationEventDto(
                 verification.getUser().getEmail(),
