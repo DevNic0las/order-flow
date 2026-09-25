@@ -174,10 +174,12 @@ class EmailVerificationServiceTest {
                 .verificationCode("123456")
                 .token("refresh-token")
                 .expirationAt(LocalDateTime.now().plusMinutes(2))
+                .lastSentAt(LocalDateTime.now().minusMinutes(5))
                 .verified(false)
                 .build();
 
         when(repository.findByToken("refresh-token")).thenReturn(Optional.of(verification));
+        when(repository.save(verification)).thenReturn(verification);
 
         EmailVerification result = service.resendVerification("refresh-token");
 

@@ -1,5 +1,23 @@
 
 spring:
+  datasource:
+    url: ${DATABASE_URL}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: notification
+    show-sql: false
+
+  flyway:
+    schemas:
+      - notification
+    default-schema: notification
+    locations: classpath:db/migration/notification
+    baseline-on-migrate: true
+
   rabbitmq:
     addresses: ${RABBITMQ_URL}
     ssl:

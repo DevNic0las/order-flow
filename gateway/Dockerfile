@@ -7,15 +7,14 @@ COPY inventory/pom.xml inventory/
 COPY notification/pom.xml notification/
 COPY auth-service/pom.xml auth-service/
 COPY auth-security/pom.xml auth-security/
-COPY auth-security/src auth-security/src
 COPY gateway/pom.xml gateway/
-RUN mvn -pl inventory -am dependency:go-offline -q
+RUN mvn -pl gateway -am dependency:go-offline -q
 
-COPY inventory/src inventory/src
-RUN mvn -pl inventory -am package -DskipTests -q
+COPY gateway/src gateway/src
+RUN mvn -pl gateway -am package -DskipTests -q
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
-COPY --from=build /app/inventory/target/*.jar app.jar
+COPY --from=build /app/gateway/target/*.jar app.jar
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

@@ -293,9 +293,9 @@ class AuthServiceTest {
 
         when(emailVerificationService.resendVerification("token-123")).thenReturn(verification);
 
-        ResendCodeResponseDto response = authService.resendCode(new ResendCodeRequestDto(UUID.randomUUID().toString()));
+        ResendCodeResponseDto response = authService.resendCode(new ResendCodeRequestDto("token-123"));
 
-        assertThat(response).isEqualTo("token-123");
+        assertThat(response.token()).isEqualTo("token-123");
 
         ArgumentCaptor<EmailVerificationEventDto> eventCaptor = ArgumentCaptor.forClass(EmailVerificationEventDto.class);
         verify(emailVerificationProducer).send(eventCaptor.capture());
@@ -305,7 +305,7 @@ class AuthServiceTest {
 
     @Test
     void shouldRejectResendWhenTokenIsBlank() {
-        assertThatThrownBy(() -> authService.resendCode(new ResendCodeRequestDto(UUID.randomUUID().toString()   )))
+        assertThatThrownBy(() -> authService.resendCode(new ResendCodeRequestDto("   ")))
                 .isInstanceOf(InvalidRequestException.class)
                 .hasMessage("Token is required");
     }

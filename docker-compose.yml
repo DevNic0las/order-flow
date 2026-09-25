@@ -30,15 +30,21 @@ services:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql  # cria schemas separados
 
   order-service:
-    build: 
+    build:
       context: .
       dockerfile: order/Dockerfile
     container_name: order-service
     ports:
-      - "8080:8080"
+      - "8081:8081"
     environment:
+      SPRING_PROFILES_ACTIVE: prod
       SPRING_RABBITMQ_HOST: rabbitmq
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/orderflow?currentSchema=orders
+      SPRING_RABBITMQ_ADDRESSES: amqp://guest:guest@rabbitmq:5672
+      SPRING_RABBITMQ_SSL_ENABLED: "false"
+      DATABASE_URL: jdbc:postgresql://postgres:5432/orderflow?currentSchema=orders
+      DATABASE_USER: orderflow
+      DATABASE_PASSWORD: orderflow
+      JWT_SECRET: ${JWT_SECRET}
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -46,38 +52,96 @@ services:
         condition: service_started
 
   inventory-service:
-    build: 
+    build:
       context: .
       dockerfile: inventory/Dockerfile
     container_name: inventory-service
     ports:
-      - "8081:8081"
+      - "8082:8082"
     environment:
+      SPRING_PROFILES_ACTIVE: prod
       SPRING_RABBITMQ_HOST: rabbitmq
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/orderflow?currentSchema=inventory
+      SPRING_RABBITMQ_ADDRESSES: amqp://guest:guest@rabbitmq:5672
+      SPRING_RABBITMQ_SSL_ENABLED: "false"
+      DATABASE_URL: jdbc:postgresql://postgres:5432/orderflow?currentSchema=inventory
+      DATABASE_USER: orderflow
+      DATABASE_PASSWORD: orderflow
+      JWT_SECRET: ${JWT_SECRET}
     depends_on:
       rabbitmq:
         condition: service_healthy
+      postgres:
+        condition: service_started
 
   notification-service:
-    build: 
+    build:
       context: .
       dockerfile: notification/Dockerfile
     container_name: notification-service
     ports:
-      - "8082:8082"
+      - "8083:8083"
     environment:
+      SPRING_PROFILES_ACTIVE: prod
       SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_ADDRESSES: amqp://guest:guest@rabbitmq:5672
+      SPRING_RABBITMQ_SSL_ENABLED: "false"
+      DATABASE_URL: jdbc:postgresql://postgres:5432/orderflow?currentSchema=notification
+      DATABASE_USER: orderflow
+      DATABASE_PASSWORD: orderflow
+      BREVO_API_KEY: ${BREVO_API_KEY:-}
+      BREVO_SENDER_EMAIL: ${BREVO_SENDER_EMAIL:-noreply@orderflow.com}
+      BREVO_SENDER_NAME: ${BREVO_SENDER_NAME:-orderflow}
+      BREVO_API_URL: ${BREVO_API_URL:-https://api.brevo.com}
     depends_on:
       rabbitmq:
         condition: service_healthy
-        
+      postgres:
+        condition: service_started
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: auth-service/Dockerfile
+    container_name: auth-service
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_ADDRESSES: amqp://guest:guest@rabbitmq:5672
+      SPRING_RABBITMQ_SSL_ENABLED: "false"
+      DATABASE_URL: jdbc:postgresql://postgres:5432/orderflow?currentSchema=users
+      DATABASE_USER: orderflow
+      DATABASE_PASSWORD: orderflow
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_started
+
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    container_name: orderflow-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      - order-service
+      - inventory-service
+      - notification-service
+      - auth-service
+
   mailpit:
     image: axllent/mailpit:latest
     container_name: orderflow-mailpit
     ports:
-      - "1025:1025"   
-      - "8025:8025"   
+      - "1025:1025"
+      - "8025:8025"
 volumes:
   postgres_data:
   grafana_data:

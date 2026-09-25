@@ -91,6 +91,7 @@ public class EmailVerificationService {
         if (verification.getLastSentAt() != null
                 && verification.getLastSentAt().plusMinutes(1).isAfter(now)) {
             throw new VerificationCooldownException(
+
                     "Please wait before requesting another verification code"
             );
         }

@@ -119,6 +119,9 @@ public class AuthService {
             throw new InvalidRequestException("Request body is required");
         }
 
+        if (request.token() == null || request.token().isBlank()) {
+            throw new InvalidRequestException("Token is required");
+        }
 
         EmailVerification verification = emailVerificationService.resendVerification(request.token());
         emailVerificationProducer.send(new EmailVerificationEventDto(

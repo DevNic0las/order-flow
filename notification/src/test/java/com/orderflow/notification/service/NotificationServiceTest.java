@@ -4,6 +4,7 @@ import com.orderflow.notification.dto.NotificationEmailVerification;
 import com.orderflow.notification.dto.NotificationEventDto;
 import com.orderflow.notification.dto.NotificationEventEmailDto;
 import com.orderflow.notification.port.EmailSender;
+import com.orderflow.notification.repository.ProcessedNotificationEventRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
@@ -24,11 +27,15 @@ class NotificationServiceTest {
     @Mock
     private EmailSender emailSender;
 
+    @Mock
+    private ProcessedNotificationEventRepository processedNotificationEventRepository;
+
     private NotificationService notificationService;
 
     @BeforeEach
     void setUp() {
-        notificationService = new NotificationService(emailSender);
+        notificationService = new NotificationService(emailSender, processedNotificationEventRepository);
+        lenient().when(processedNotificationEventRepository.insertIfNotExists(any())).thenReturn(1);
     }
 
     @Test

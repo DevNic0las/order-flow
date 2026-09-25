@@ -1,0 +1,11 @@
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+server:
+  port: 8080
+  forward-headers-strategy: framework
+
+jwt:
+  secret: ${JWT_SECRET}
+  duration: 3600000
