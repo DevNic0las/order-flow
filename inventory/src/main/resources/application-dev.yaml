@@ -40,5 +40,3 @@ management:
   metrics:
     tags:
       application: inventory-service
-server:
-  port: 8081
