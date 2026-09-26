@@ -32,9 +32,11 @@ public class JwtTokenValidator {
     }
   }
 
+  @SuppressWarnings("unchecked")
   public List<String> extractRoles(String token) {
     Claims claims = Jwts.parser().verifyWith(key()).build()
             .parseSignedClaims(token).getPayload();
-    return claims.get("roles", List.class);
+    List<String> roles = claims.get("roles", List.class);
+    return roles != null ? roles : List.of();
   }
 }

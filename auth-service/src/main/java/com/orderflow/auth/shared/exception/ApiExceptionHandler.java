@@ -60,6 +60,12 @@ public class ApiExceptionHandler {
                 .body(new ApiError(ex.getMessage()));
     }
 
+    @ExceptionHandler(VerificationCooldownException.class)
+    public ResponseEntity<ApiError> handleVerificationCooldown(VerificationCooldownException ex) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .body(new ApiError(ex.getMessage()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleUnexpected(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

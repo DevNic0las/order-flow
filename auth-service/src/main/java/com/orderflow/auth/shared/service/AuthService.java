@@ -17,6 +17,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AuthService {
@@ -42,6 +43,7 @@ public class AuthService {
         this.repository = repository;
     }
 
+    @Transactional
     public RegisterResponseDto register(RegisterRequestDto request) {
         if (request == null) {
             throw new InvalidRequestException("Request body is required");

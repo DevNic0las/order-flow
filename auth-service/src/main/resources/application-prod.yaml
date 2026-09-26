@@ -1,6 +1,6 @@
 spring:
   application:
-    name: order-service
+    name: auth-service
 
   datasource:
     url: ${DATABASE_URL}

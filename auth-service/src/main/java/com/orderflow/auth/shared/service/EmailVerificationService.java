@@ -8,13 +8,17 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 @RequiredArgsConstructor
 public class EmailVerificationService {
+
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final EmailVerificationRepository repository;
 
@@ -25,12 +29,14 @@ public class EmailVerificationService {
 
         String code = generateCode();
         String token = generateToken();
+        LocalDateTime now = LocalDateTime.now();
 
         EmailVerification verification = EmailVerification.builder()
                 .user(user)
                 .verificationCode(code)
                 .token(token)
-                .expirationAt(LocalDateTime.now().plusMinutes(10))
+                .expirationAt(now.plusMinutes(10))
+                .lastSentAt(now)
                 .verified(false)
                 .build();
 
@@ -63,7 +69,7 @@ public class EmailVerificationService {
             throw new VerificationCodeExpiredException("Verification code expired");
         }
 
-        if (!verification.getVerificationCode().equals(code)) {
+        if (!codeMatches(verification.getVerificationCode(), code)) {
             throw new InvalidVerificationCodeException("Invalid verification code");
         }
 
@@ -104,9 +110,13 @@ public class EmailVerificationService {
     }
 
     private String generateCode() {
-        return String.valueOf(
-                ThreadLocalRandom.current()
-                        .nextInt(100000, 1000000)
+        return String.valueOf(SECURE_RANDOM.nextInt(100000, 1000000));
+    }
+
+    private boolean codeMatches(String expected, String provided) {
+        return MessageDigest.isEqual(
+                expected.getBytes(StandardCharsets.UTF_8),
+                provided.getBytes(StandardCharsets.UTF_8)
         );
     }
 
