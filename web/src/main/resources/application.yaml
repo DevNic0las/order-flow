@@ -1,0 +1,10 @@
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+server:
+  port: 8085
+  forward-headers-strategy: framework
+
+gateway:
+  base-url: ${GATEWAY_BASE_URL:http://localhost:8080}

@@ -1,0 +1,18 @@
+<!-- Fragmento de sidebar/navegação, incluído nas páginas com th:replace.
+     'active' recebido como parâmetro: 'dashboard' ou 'catalog'. -->
+<div th:fragment="sidebar(active)" class="sidebar">
+  <p class="brand">Order Flow</p>
+  <p class="brand-sub">painel operacional</p>
+
+  <nav class="nav">
+    <a th:href="@{/dashboard}" th:classappend="${active == 'dashboard'} ? 'active'">Pedidos</a>
+    <a th:href="@{/catalog}" th:classappend="${active == 'catalog'} ? 'active'">Estoque</a>
+  </nav>
+
+  <div class="sidebar-foot">
+    <span th:text="${#authentication.name}">usuário</span>
+    <form th:action="@{/logout}" method="post">
+      <button type="submit">Sair</button>
+    </form>
+  </div>
+</div>

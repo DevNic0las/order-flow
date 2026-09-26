@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: web
+
+gateway:
+  base-url: http://gateway:8080

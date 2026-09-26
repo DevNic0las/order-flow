@@ -13,6 +13,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 public class OrderController {
@@ -26,6 +28,11 @@ private final OrderService orderService;
                                                          @Valid @RequestBody OrderRequestDto orderRequestDto){
   String userId = authentication.getName();
   return ResponseEntity.ok(orderService.createOrder(orderRequestDto, userId));
+}
+
+@GetMapping
+  public ResponseEntity<List<OrderResponseDto>> getOrders(){
+  return ResponseEntity.ok(orderService.getAllOrders());
 }
 
 @GetMapping("/test")

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Estoque · Order Flow</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+  <div class="shell">
+    <div th:replace="~{fragments/layout :: sidebar('catalog')}"></div>
+
+    <main class="main">
+      <div class="page-head">
+        <h1>Estoque</h1>
+        <span class="page-meta" th:text="${#lists.size(products)} + ' itens'">0 itens</span>
+      </div>
+      <p class="page-sub">Quantidade disponível em tempo real — cada baixa acontece de forma assíncrona quando um pedido é confirmado.</p>
+
+      <table class="ledger" th:if="${not #lists.isEmpty(products)}">
+        <thead>
+          <tr>
+            <th>Produto</th>
+            <th class="num">Disponível</th>
+            <th style="width: 160px;">Nível</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr th:each="product : ${products}">
+            <td class="customer" th:text="${product.productName}">Produto</td>
+            <td class="num qty-value" th:classappend="${product.quantity < 10} ? 'qty-low'" th:text="${product.quantity}">0</td>
+            <td>
+              <div class="stock-fill" th:classappend="${product.quantity < 10} ? 'low'">
+                <span th:style="'width: ' + (${product.quantity} > 100 ? 100 : ${product.quantity}) + '%'"></span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="empty-state" th:if="${#lists.isEmpty(products)}">
+        Nenhum produto cadastrado ainda.
+      </div>
+    </main>
+  </div>
+</body>
+</html>

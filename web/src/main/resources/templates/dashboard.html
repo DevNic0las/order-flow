@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Pedidos · Order Flow</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+  <div class="shell">
+    <div th:replace="~{fragments/layout :: sidebar('dashboard')}"></div>
+
+    <main class="main">
+      <div class="page-head">
+        <h1>Pedidos</h1>
+        <span class="page-meta" th:text="${#lists.size(orders)} + ' registros'">0 registros</span>
+      </div>
+      <p class="page-sub">Cada linha é um pedido recebido pela API; o carimbo mostra o resultado da baixa de estoque assim que o evento assíncrono é processado.</p>
+
+      <table class="ledger" th:if="${not #lists.isEmpty(orders)}">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Cliente</th>
+            <th class="num">Qtd.</th>
+            <th>Criado em</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr th:each="order : ${orders}">
+            <td class="order-id" th:text="'#' + ${order.id}">#000</td>
+            <td class="customer" th:text="${order.customerName}">Cliente</td>
+            <td class="num qty-value" th:text="${order.quantity}">0</td>
+            <td class="timestamp" th:text="${#temporals.format(order.createdAt, 'dd/MM HH:mm')}">--/-- --:--</td>
+            <td>
+              <span class="stamp"
+                    th:classappend="${order.status == 'CONFIRMED'} ? 'stamp-confirmed' : (${order.status == 'REJECTED'} ? 'stamp-rejected' : 'stamp-pending')"
+                    th:text="${order.status == 'CONFIRMED'} ? 'confirmado' : (${order.status == 'REJECTED'} ? 'rejeitado' : 'pendente')">
+                pendente
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="empty-state" th:if="${#lists.isEmpty(orders)}">
+        Nenhum pedido registrado ainda.
+      </div>
+    </main>
+  </div>
+</body>
+</html>

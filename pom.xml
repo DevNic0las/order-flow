@@ -16,6 +16,7 @@
         <module>auth-service</module>
         <module>gateway</module>
         <module>auth-security</module>
+        <module>web</module>
 
     </modules>
 
