@@ -56,11 +56,11 @@ class OrderServiceTest {
 
     @BeforeEach
     void setup() {
-        orderRequestDto = new OrderRequestDto("Customer Test", 123L, 5);
+        orderRequestDto = new OrderRequestDto(123L, 5);
 
         order = new Order();
         order.setId(1L);
-        order.setCustomerName(orderRequestDto.customerName());
+        order.setCustomerName("Customer Test");
         order.setProductId(orderRequestDto.productId());
         order.setQuantity(orderRequestDto.quantity());
         order.setStatus(OrderStatus.PENDING);

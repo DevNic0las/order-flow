@@ -171,10 +171,51 @@ public class GatewayClient {
         return null;
     }
 
+    /**
+     * Cria um pedido. O customerName é preenchido pelo backend (usuário do JWT).
+     *
+     * @return OrderCreated com o id do pedido em caso de sucesso (2xx),
+     *         null em rejeição de dados (400/403 — validação, estoque insuficiente, role),
+     *         ou lança GatewayIntegrationException para outras falhas.
+     */
+    public OrderCreated createOrder(String jwt, Long productId, Integer quantity) {
+        try {
+            OrderResponse response = gatewayRestClient.post()
+                    .uri("/orders/orders")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwt)
+                    .body(new CreateOrderRequest(productId, quantity))
+                    .retrieve()
+                    .body(OrderResponse.class);
+
+            if (response == null || response.id() == null) {
+                log.error("POST /orders via gateway returned empty body");
+                throw new GatewayIntegrationException("Resposta vazia do serviço de pedidos");
+            }
+            return new OrderCreated(response.id(), response.status());
+        } catch (HttpClientErrorException ex) {
+            log.warn("POST /orders via gateway rejected: status={} body={}",
+                    ex.getStatusCode(), ex.getResponseBodyAsString());
+            return null;
+        } catch (RestClientException ex) {
+            log.error("POST /orders via gateway failed: {}", ex.getMessage());
+            throw new GatewayIntegrationException("Erro ao conectar com o serviço de pedidos", ex);
+        }
+    }
+
+    public record OrderCreated(Long orderId, String status) {
+    }
+
+    public record OrderResponse(Long id, String customerName, Long productId,
+                                Integer quantity, String status) {
+    }
+
+    public record CreateOrderRequest(Long productId, Integer quantity) {
+    }
+
     public List<OrderViewDto> getOrders(String jwt) {
         try {
             return gatewayRestClient.get()
-                    .uri("/orders/")
+                    .uri("/orders/orders")
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwt)
                     .retrieve()
                     .body(ORDER_LIST_TYPE);

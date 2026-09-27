@@ -58,7 +58,7 @@ class InventoryServiceTest {
        inventory.setQuantity(10);
        inventory.setProductName("Test Product");
 
-       inventoryProductDto = new InventoryProductDto("Test Product", 10);
+       inventoryProductDto = new InventoryProductDto(1L, "Test Product", 10);
        eventId = UUID.randomUUID();
    }
 

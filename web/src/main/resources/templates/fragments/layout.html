@@ -1,11 +1,15 @@
 <!-- Fragmento de sidebar/navegação, incluído nas páginas com th:replace.
-     'active' recebido como parâmetro: 'dashboard' ou 'catalog'. -->
+     'active' recebido como parâmetro: 'dashboard', 'catalog' ou 'buy'.
+     Links variam pelo papel do usuário logado (ADMIN vê Pedidos, CUSTOMER vê Comprar). -->
 <div th:fragment="sidebar(active)" class="sidebar">
   <p class="brand">Order Flow</p>
-  <p class="brand-sub">painel operacional</p>
+  <p class="brand-sub" th:text="${#authorization.expression('hasRole(''ADMIN'')')} ? 'painel operacional' : 'loja'">painel operacional</p>
 
   <nav class="nav">
-    <a th:href="@{/dashboard}" th:classappend="${active == 'dashboard'} ? 'active'">Pedidos</a>
+    <a th:if="${#authorization.expression('hasRole(''ADMIN'')')}"
+       th:href="@{/dashboard}" th:classappend="${active == 'dashboard'} ? 'active'">Pedidos</a>
+    <a th:if="${#authorization.expression('hasRole(''CUSTOMER'')')}"
+       th:href="@{/buy}" th:classappend="${active == 'buy'} ? 'active'">Comprar</a>
     <a th:href="@{/catalog}" th:classappend="${active == 'catalog'} ? 'active'">Estoque</a>
   </nav>
 

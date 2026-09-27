@@ -100,12 +100,12 @@ public InventoryProductDto createProduct(InventoryProductDto productDto) {
     inventory.setQuantity(productDto.quantity());
     inventoryRepository.save(inventory);
     log.info("Created new product in inventory: {}", productDto);
-    return new InventoryProductDto(inventory.getProductName(), inventory.getQuantity());
+    return new InventoryProductDto(inventory.getId(), inventory.getProductName(), inventory.getQuantity());
 }
 
 public List<InventoryProductDto> getAllProducts() {
     List<Inventory> inventory = inventoryRepository.findAll();
-    return inventory.stream().map(i-> new InventoryProductDto(i.getProductName(),i.getQuantity())).toList();
+    return inventory.stream().map(i-> new InventoryProductDto(i.getId(), i.getProductName(),i.getQuantity())).toList();
 }
 
 

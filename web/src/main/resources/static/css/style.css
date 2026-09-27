@@ -325,3 +325,20 @@ body {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 18px;
 }
+
+.buy-form { max-width: 380px; }
+
+.buy-form select {
+  width: 100%;
+  padding: 10px 11px;
+  border: 1px solid var(--hairline);
+  border-radius: 3px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 14px;
+  background: var(--paper-raised);
+  color: var(--ink);
+}
+
+.buy-form select:focus { outline: none; border-color: var(--ink); }
+
+.buy-btn { width: auto; padding: 11px 28px; }

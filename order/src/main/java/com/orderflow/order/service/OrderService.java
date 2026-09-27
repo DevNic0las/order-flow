@@ -40,7 +40,7 @@ public class OrderService {
     log.info("Creating order for productId={} with quantity={}", orderRequestDto.productId(), orderRequestDto.quantity());
 
     Order order = new Order();
-    order.setCustomerName(orderRequestDto.customerName());
+    order.setCustomerName(userId);
     order.setProductId(orderRequestDto.productId());
     order.setQuantity(orderRequestDto.quantity());
     UUID eventId = UUID.randomUUID();

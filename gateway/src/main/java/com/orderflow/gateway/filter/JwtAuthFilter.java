@@ -24,7 +24,8 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
   private String secret;
 
   private static final List<String> PUBLIC_PATHS = List.of(
-          "/auth/login", "/auth/register", "/auth/verifycode", "/auth/resend-code"
+          "/auth/login", "/auth/register", "/auth/verifycode", "/auth/resend-code",
+          "/login", "/register", "/verifycode", "/resend-code", "/dashboard", "/catalog", "/buy"
   );
 
   private static final List<String> PUBLIC_PATH_FRAGMENTS = List.of(
@@ -39,7 +40,8 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
   public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
     String path = exchange.getRequest().getURI().getPath();
 
-    boolean isPublic = PUBLIC_PATH_FRAGMENTS.stream().anyMatch(fragment -> {
+    boolean isPublic = PUBLIC_PATHS.stream().anyMatch(path::equals)
+            || PUBLIC_PATH_FRAGMENTS.stream().anyMatch(fragment -> {
       int idx = path.indexOf(fragment);
       if (idx < 0) return false;
       int endIdx = idx + fragment.length();

@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.List;
+
 @Controller
 @RequiredArgsConstructor
 @Slf4j
@@ -65,7 +67,7 @@ public class WebController {
         }
 
         session.setAttribute(JWT_SESSION_ATTRIBUTE, jwt);
-        authenticateSession(email, request, response);
+        authenticateSession(email, jwt, request, response);
 
 
 
@@ -199,16 +201,94 @@ public class WebController {
         return "catalog";
     }
 
+    @GetMapping("/buy")
+    public String buyPage(HttpSession session, Model model) {
+        String jwt = (String) session.getAttribute(JWT_SESSION_ATTRIBUTE);
+        if (jwt == null || jwt.isBlank()) {
+            return "redirect:/login";
+        }
+
+        try {
+            model.addAttribute("products", gatewayClient.getProducts(jwt));
+        } catch (GatewayClient.GatewayIntegrationException ex) {
+            log.error("Failed to load products for buy page", ex);
+            model.addAttribute("products", java.util.List.of());
+            model.addAttribute("error", "Erro ao conectar com o serviço de estoque.");
+        }
+        return "buy";
+    }
+
+    @PostMapping("/buy")
+    public String doBuy(@RequestParam Long productId,
+                        @RequestParam Integer quantity,
+                        HttpSession session,
+                        Model model) {
+        String jwt = (String) session.getAttribute(JWT_SESSION_ATTRIBUTE);
+        if (jwt == null || jwt.isBlank()) {
+            return "redirect:/login";
+        }
+
+        GatewayClient.OrderCreated created;
+        try {
+            created = gatewayClient.createOrder(jwt, productId, quantity);
+        } catch (GatewayClient.GatewayIntegrationException ex) {
+            log.error("Integration failure during buy for productId={}", productId, ex);
+            model.addAttribute("error", "Erro ao conectar com o serviço de pedidos.");
+            model.addAttribute("products", reloadProducts(jwt));
+            return "buy";
+        }
+
+        if (created == null) {
+            model.addAttribute("error", "Não foi possível registrar o pedido. Verifique o estoque e tente novamente.");
+            model.addAttribute("products", reloadProducts(jwt));
+            return "buy";
+        }
+
+        model.addAttribute("confirmation", created);
+        model.addAttribute("products", reloadProducts(jwt));
+        return "buy";
+    }
+
+    private List<com.orderflow.web.dto.ProductViewDto> reloadProducts(String jwt) {
+        try {
+            return gatewayClient.getProducts(jwt);
+        } catch (GatewayClient.GatewayIntegrationException ex) {
+            log.error("Failed to reload products after buy", ex);
+            return java.util.List.of();
+        }
+    }
+
     @PostMapping("/logout")
     public String logout(HttpSession session) {
         session.invalidate();
         return "redirect:/login";
     }
 
-    private void authenticateSession(String email, HttpServletRequest request, HttpServletResponse response) {
+    private void authenticateSession(String email, String jwt,
+                                     HttpServletRequest request, HttpServletResponse response) {
         Authentication authentication = new UsernamePasswordAuthenticationToken(
-                email, null, AuthorityUtils.createAuthorityList("ROLE_USER"));
+                email, null, AuthorityUtils.createAuthorityList(resolveRoles(jwt)));
         SecurityContextHolder.getContext().setAuthentication(authentication);
         securityContextRepository.saveContext(SecurityContextHolder.getContext(), request, response);
+    }
+
+    private String[] resolveRoles(String jwt) {
+        try {
+            String[] parts = jwt.split("\\.");
+            byte[] payload = java.util.Base64.getUrlDecoder().decode(parts[1]);
+            com.fasterxml.jackson.databind.JsonNode claims =
+                    new com.fasterxml.jackson.databind.ObjectMapper().readTree(payload);
+            com.fasterxml.jackson.databind.JsonNode roles = claims.get("roles");
+            if (roles != null && roles.isArray() && !roles.isEmpty()) {
+                String[] result = new String[roles.size()];
+                for (int i = 0; i < roles.size(); i++) {
+                    result[i] = roles.get(i).asText();
+                }
+                return result;
+            }
+        } catch (Exception ex) {
+            log.warn("Failed to extract roles from JWT; falling back to ROLE_CUSTOMER", ex);
+        }
+        return new String[]{"ROLE_CUSTOMER"};
     }
 }

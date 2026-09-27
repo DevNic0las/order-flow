@@ -20,6 +20,10 @@ spring:
           uri: http://auth-service:8084
           predicates:
             - Path=/auth/**
+        - id: web
+          uri: http://web:8085
+          predicates:
+            - Path=/buy,/login,/register,/verifycode,/resend-code,/dashboard,/catalog,/css/**,/logout
 
 management:
   endpoints:

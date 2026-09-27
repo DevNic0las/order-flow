@@ -60,7 +60,7 @@ class OutboxPublisherIntegrationTest {
 
     @Test
     void shouldPersistOutboxEventAndPublishIt() {
-        OrderRequestDto request = new OrderRequestDto("Ana", 42L, 3);
+        OrderRequestDto request = new OrderRequestDto(42L, 3);
 
         orderService.createOrder(request, "user-1");
 

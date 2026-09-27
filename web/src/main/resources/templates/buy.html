@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Comprar · Order Flow</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+  <div class="shell">
+    <div th:replace="~{fragments/layout :: sidebar('buy')}"></div>
+
+    <main class="main">
+      <div class="page-head">
+        <h1>Comprar</h1>
+      </div>
+      <p class="page-sub">Escolha um item do estoque e confirme a quantidade. O pedido é processado de forma assíncrona — você recebe um e-mail assim que o resultado sair.</p>
+
+      <div class="flash" th:if="${confirmation}">
+        Pedido <strong th:text="'#' + ${confirmation.orderId}">#000</strong> registrado —
+        <span class="stamp stamp-pending">pendente</span>.
+        Você será notificado por e-mail assim que o estoque for confirmado.
+      </div>
+
+      <div class="auth-error" th:if="${error}" th:text="${error}" style="max-width: 480px;">
+        Não foi possível registrar o pedido.
+      </div>
+
+      <form th:action="@{/buy}" method="post" class="buy-form" th:if="${not #lists.isEmpty(products)}">
+        <div class="field">
+          <label for="productId">Produto</label>
+          <select id="productId" name="productId" required>
+            <option value="" disabled selected>Selecione um item</option>
+            <option th:each="product : ${products}"
+                    th:value="${product.id}"
+                    th:text="${product.productName} + ' — ' + ${product.quantity} + ' disponíveis'">
+              Produto
+            </option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="quantity">Quantidade</label>
+          <input type="number" id="quantity" name="quantity" min="1" value="1" required>
+        </div>
+        <button type="submit" class="btn buy-btn">Confirmar compra</button>
+      </form>
+
+      <div class="empty-state" th:if="${#lists.isEmpty(products)}">
+        Nenhum item disponível no estoque no momento.
+      </div>
+    </main>
+  </div>
+</body>
+</html>

@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -33,6 +34,13 @@ public class GlobalExceptionHandler {
     log.warn("Order not found: {}", ex.getMessage());
     var error = new ErrorResponseDto(404, "Order not found", LocalDateTime.now(), Map.of("error", ex.getMessage()));
     return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+  }
+
+  @ExceptionHandler(AccessDeniedException.class)
+  public ResponseEntity<ErrorResponseDto> handleAccessDenied(AccessDeniedException ex) {
+    log.warn("Access denied: {}", ex.getMessage());
+    var error = new ErrorResponseDto(403, "Access denied", LocalDateTime.now(), Map.of("error", "Access denied"));
+    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
   }
 
   @ExceptionHandler(Exception.class)
