@@ -10,8 +10,6 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "tb_orders", schema = "orders")
 @NoArgsConstructor
-@Getter
-@Setter
 public class Order {
   private static final Logger log = LoggerFactory.getLogger(Order.class);
 
@@ -48,6 +46,70 @@ public class Order {
   @PreUpdate
   void preUpdate() {
     this.updatedAt = LocalDateTime.now();
+  }
+
+  public Long getId() {
+    return id;
+  }
+
+  public void setId(Long id) {
+    this.id = id;
+  }
+
+  public Long getVersion() {
+    return version;
+  }
+
+  public void setVersion(Long version) {
+    this.version = version;
+  }
+
+  public String getCustomerName() {
+    return customerName;
+  }
+
+  public void setCustomerName(String customerName) {
+    this.customerName = customerName;
+  }
+
+  public Long getProductId() {
+    return productId;
+  }
+
+  public void setProductId(Long productId) {
+    this.productId = productId;
+  }
+
+  public Integer getQuantity() {
+    return quantity;
+  }
+
+  public void setQuantity(Integer quantity) {
+    this.quantity = quantity;
+  }
+
+  public OrderStatus getStatus() {
+    return status;
+  }
+
+  public void setStatus(OrderStatus status) {
+    this.status = status;
+  }
+
+  public LocalDateTime getCreatedAt() {
+    return createdAt;
+  }
+
+  public void setCreatedAt(LocalDateTime createdAt) {
+    this.createdAt = createdAt;
+  }
+
+  public LocalDateTime getUpdatedAt() {
+    return updatedAt;
+  }
+
+  public void setUpdatedAt(LocalDateTime updatedAt) {
+    this.updatedAt = updatedAt;
   }
 
   public void confirmed(){

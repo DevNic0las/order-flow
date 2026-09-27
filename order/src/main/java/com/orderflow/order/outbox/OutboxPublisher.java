@@ -3,8 +3,8 @@ package com.orderflow.order.outbox;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orderflow.order.dtos.OrderEventDto;
 import com.orderflow.order.messaging.OrderPublisher;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -14,13 +14,18 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Component
-@RequiredArgsConstructor
-@Slf4j
 public class OutboxPublisher {
+    private static final Logger log = LoggerFactory.getLogger(OutboxPublisher.class);
 
     private final OutboxEventRepository outboxEventRepository;
     private final OrderPublisher orderPublisher;
     private final ObjectMapper objectMapper;
+
+    public OutboxPublisher(OutboxEventRepository outboxEventRepository, OrderPublisher orderPublisher, ObjectMapper objectMapper) {
+        this.outboxEventRepository = outboxEventRepository;
+        this.orderPublisher = orderPublisher;
+        this.objectMapper = objectMapper;
+    }
 
     @Scheduled(fixedDelay = 1000)
     public void publishPendingEvents() {

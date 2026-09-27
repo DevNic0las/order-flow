@@ -26,6 +26,7 @@
       </div>
 
       <form th:action="@{/buy}" method="post" class="buy-form" th:if="${not #lists.isEmpty(products)}">
+        <input type="hidden" name="idempotencyKey" th:value="${idempotencyKey}">
         <div class="field">
           <label for="productId">Produto</label>
           <select id="productId" name="productId" required>

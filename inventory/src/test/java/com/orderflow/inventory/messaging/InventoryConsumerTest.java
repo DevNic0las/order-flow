@@ -2,13 +2,14 @@ package com.orderflow.inventory.messaging;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
+import com.orderflow.inventory.dto.InventoryEventDto;
 import com.orderflow.inventory.exception.InventoryGlobalExceptionHandler;
 import com.orderflow.inventory.service.InventoryService;
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.core.Message;
@@ -18,25 +19,30 @@ import org.springframework.amqp.support.converter.MessageConverter;
 
 class InventoryConsumerTest {
 
+
     @Test
-    void shouldRejectMalformedMessageWithoutRequeue() {
+    void shouldDecreaseStockWhenMessageIsValid() {
         InventoryService inventoryService = mock(InventoryService.class);
-        MessageConverter messageConverter = mock(MessageConverter.class);
-        InventoryConsumer consumer = new InventoryConsumer(inventoryService, messageConverter);
 
-        MessageProperties props = new MessageProperties();
-        props.setMessageId("msg-123");
-        Message message = new Message("{bad-json".getBytes(StandardCharsets.UTF_8), props);
+        InventoryConsumer consumer = new InventoryConsumer(inventoryService);
 
-        when(messageConverter.fromMessage(message)).thenThrow(new MessageConversionException("bad json"));
+        InventoryEventDto event = new InventoryEventDto(
+                1L,
+                10L,
+                2,
+                "EMAIL",
+                UUID.randomUUID()
+                );
 
-        AmqpRejectAndDontRequeueException ex = assertThrows(
-                AmqpRejectAndDontRequeueException.class,
-                () -> consumer.onOrderInventoryResult(message)
+        consumer.onOrderInventoryResult(event);
+
+        verify(inventoryService).decreaseProductStock(
+                event.eventId(),
+                event.orderId(),
+                event.productId(),
+                event.quantity(),
+                event.to()
         );
-
-        assertEquals("Malformed inventory message, sending to DLQ", ex.getMessage());
-        verifyNoInteractions(inventoryService);
     }
 
     @Test

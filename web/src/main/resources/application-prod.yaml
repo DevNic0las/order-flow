@@ -4,3 +4,7 @@ spring:
 
 gateway:
   base-url: http://gateway:8080
+
+email:
+  admin:
+    prod: ${EMAIL_ADMIN_PROD}

@@ -11,22 +11,27 @@ import com.orderflow.order.messaging.OrderPublisher;
 import com.orderflow.order.outbox.OutboxEvent;
 import com.orderflow.order.outbox.OutboxEventStatus;
 import com.orderflow.order.outbox.OutboxEventRepository;
+import com.orderflow.order.repository.OrderIdempotencyKeyRepository;
 import com.orderflow.order.repository.OrderRepository;
 import com.orderflow.order.repository.ProcessedOrderResultEventRepository;
 import com.orderflow.order.service.mapper.OrderMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class OrderService {
+
+  private static final Logger log = LoggerFactory.getLogger(OrderService.class);
 
   private final OrderPublisher orderPublisher;
   private final OrderMapper orderMapper;
@@ -34,10 +39,27 @@ public class OrderService {
   private final OutboxEventRepository outboxEventRepository;
   private final ObjectMapper objectMapper;
   private final ProcessedOrderResultEventRepository processedOrderResultEventRepository;
+  private final OrderIdempotencyKeyRepository orderIdempotencyKeyRepository;
 
   @Transactional
   public OrderResponseDto createOrder(OrderRequestDto orderRequestDto, String userId){
+    return createOrder(orderRequestDto, userId, null);
+  }
+
+  @Transactional
+  public OrderResponseDto createOrder(OrderRequestDto orderRequestDto, String userId, String idempotencyKey){
     log.info("Creating order for productId={} with quantity={}", orderRequestDto.productId(), orderRequestDto.quantity());
+
+    if (StringUtils.hasText(idempotencyKey)) {
+      Optional<Long> existingOrderId = orderIdempotencyKeyRepository.findOrderIdByIdempotencyKey(idempotencyKey);
+      if (existingOrderId.isPresent()) {
+        Long orderId = existingOrderId.get();
+        Order existingOrder = orderRepository.findById(orderId)
+            .orElseThrow(() -> new IllegalStateException("Order not found for idempotency key: " + idempotencyKey));
+        log.info("Returning existing order for idempotency key. orderId={}, key={}", orderId, idempotencyKey);
+        return orderMapper.toResponseDto(existingOrder);
+      }
+    }
 
     Order order = new Order();
     order.setCustomerName(userId);
@@ -68,6 +90,18 @@ public class OrderService {
     outboxEvent.setStatus(OutboxEventStatus.PENDING);
     outboxEvent.setCreatedAt(LocalDateTime.now());
     outboxEventRepository.save(outboxEvent);
+
+    if (StringUtils.hasText(idempotencyKey)) {
+      int inserted = orderIdempotencyKeyRepository.insertIfNotExists(idempotencyKey, savedOrder.getId());
+      if (inserted == 0) {
+        Long existingOrderId = orderIdempotencyKeyRepository.findOrderIdByIdempotencyKey(idempotencyKey)
+            .orElseThrow(() -> new IllegalStateException("Concurrent create failed and idempotency key was not persisted for key: " + idempotencyKey));
+        Order concurrentOrder = orderRepository.findById(existingOrderId)
+            .orElseThrow(() -> new IllegalStateException("Concurrent order not found for idempotency key: " + idempotencyKey));
+        log.info("Another request created the order first. Returning concurrent order. orderId={}, key={}", existingOrderId, idempotencyKey);
+        return orderMapper.toResponseDto(concurrentOrder);
+      }
+    }
 
     return orderMapper.toResponseDto(savedOrder);
   }

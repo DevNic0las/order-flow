@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
@@ -17,9 +18,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
+import java.util.UUID;
 
 @Controller
 @RequiredArgsConstructor
@@ -31,6 +34,9 @@ public class WebController {
     private final GatewayClient gatewayClient;
     private final JwtTokenValidator jwtTokenValidator;
     private SecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
+
+    @Value("${email.admin.prod}")
+    private String adminEmail;
 
     /**
      * Recupera o JWT da sessão e valida assinatura/expiração com o JwtTokenValidator do auth-security.
@@ -89,10 +95,13 @@ public class WebController {
         session.setAttribute(JWT_SESSION_ATTRIBUTE, jwt);
         authenticateSession(email, jwt, request, response);
 
+        if(adminEmail.equals(email)) {
+            log.info("Admin logged in");
+            return "redirect:/dashboard";
+        }
 
 
-
-        return "redirect:/dashboard";
+        return "redirect:/buy";
     }
 
     @GetMapping("/register")
@@ -230,6 +239,7 @@ public class WebController {
 
         try {
             model.addAttribute("products", gatewayClient.getProducts(jwt));
+            model.addAttribute("idempotencyKey", UUID.randomUUID().toString());
         } catch (GatewayClient.GatewayIntegrationException ex) {
             log.error("Failed to load products for buy page", ex);
             model.addAttribute("products", java.util.List.of());
@@ -241,6 +251,7 @@ public class WebController {
     @PostMapping("/buy")
     public String doBuy(@RequestParam Long productId,
                         @RequestParam Integer quantity,
+                        @RequestParam("idempotencyKey") String idempotencyKey,
                         HttpSession session,
                         Model model) {
         String jwt = validSessionJwt(session);
@@ -250,7 +261,7 @@ public class WebController {
 
         GatewayClient.OrderCreated created;
         try {
-            created = gatewayClient.createOrder(jwt, productId, quantity);
+            created = gatewayClient.createOrder(jwt, productId, quantity, idempotencyKey);
         } catch (GatewayClient.GatewayIntegrationException ex) {
             log.error("Integration failure during buy for productId={}", productId, ex);
             model.addAttribute("error", "Erro ao conectar com o serviço de pedidos.");

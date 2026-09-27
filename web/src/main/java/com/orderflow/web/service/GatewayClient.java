@@ -18,6 +18,7 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +32,7 @@ public class GatewayClient {
             new ParameterizedTypeReference<>() {};
 
     private final RestClient gatewayRestClient;
+
 
     /**
      * @return o JWT em caso de sucesso, null quando as credenciais são inválidas (401),
@@ -178,11 +180,12 @@ public class GatewayClient {
      *         null em rejeição de dados (400/403 — validação, estoque insuficiente, role),
      *         ou lança GatewayIntegrationException para outras falhas.
      */
-    public OrderCreated createOrder(String jwt, Long productId, Integer quantity) {
+    public OrderCreated createOrder(String jwt, Long productId, Integer quantity,String idempotencyKey) {
         try {
             OrderResponse response = gatewayRestClient.post()
                     .uri("/orders/")
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwt)
+                    .header("X-Idempotency-Key", idempotencyKey)
                     .body(new CreateOrderRequest(productId, quantity))
                     .retrieve()
                     .body(OrderResponse.class);

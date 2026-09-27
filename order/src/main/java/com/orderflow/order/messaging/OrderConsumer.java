@@ -3,17 +3,21 @@ package com.orderflow.order.messaging;
 import com.orderflow.order.config.RabbitMq;
 import com.orderflow.order.dtos.OrderResultEventDto;
 import com.orderflow.order.service.OrderService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
 @Component
-@Slf4j
-@RequiredArgsConstructor
 public class OrderConsumer {
+  private static final Logger log = LoggerFactory.getLogger(OrderConsumer.class);
+
   private final OrderService orderService;
+
+  public OrderConsumer(OrderService orderService) {
+    this.orderService = orderService;
+  }
 
   @RabbitListener(queues = RabbitMq.ORDER_RESULT_QUEUE)
   public void onOrderResult(OrderResultEventDto event) {

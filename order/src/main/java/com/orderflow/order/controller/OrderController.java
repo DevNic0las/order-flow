@@ -23,9 +23,10 @@ private final OrderService orderService;
 
 @PostMapping
   public ResponseEntity<OrderResponseDto> createOrder(Authentication authentication,
-                                                      @Valid @RequestBody OrderRequestDto orderRequestDto){
-  String userId = authentication.getName();
-  return ResponseEntity.ok(orderService.createOrder(orderRequestDto, userId));
+                                                    @RequestHeader(name = "Idempotency-Key", required = false) String idempotencyKey,
+                                                    @Valid @RequestBody OrderRequestDto orderRequestDto){
+String userId = authentication.getName();
+return ResponseEntity.ok(orderService.createOrder(orderRequestDto, userId, idempotencyKey));
 }
 
 @GetMapping

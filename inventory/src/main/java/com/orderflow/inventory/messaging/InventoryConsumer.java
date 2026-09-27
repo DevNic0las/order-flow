@@ -21,27 +21,32 @@ import jakarta.persistence.OptimisticLockException;
 public class InventoryConsumer {
 
   private final InventoryService inventoryService;
-  private final MessageConverter messageConverter;
 
   @RabbitListener(queues = RabbitMQConfig.INVENTORY_QUEUE)
-  public void onOrderInventoryResult(Message message) {
-    final InventoryEventDto event;
-
-    try {
-      event = (InventoryEventDto) messageConverter.fromMessage(message);
-    } catch (MessageConversionException ex) {
-      log.warn("Malformed inventory message received; rejecting without requeue. messageId={} payload={}",
-          message.getMessageProperties().getMessageId(), new String(message.getBody()));
-      throw new AmqpRejectAndDontRequeueException("Malformed inventory message, sending to DLQ", ex);
-    }
+  public void onOrderInventoryResult(InventoryEventDto event) {
 
     log.info("Received inventory result: {}", event);
+
     try {
-      inventoryService.decreaseProductStock(event.eventId(), event.orderId(), event.productId(), event.quantity(), event.to());
+      inventoryService.decreaseProductStock(
+              event.eventId(),
+              event.orderId(),
+              event.productId(),
+              event.quantity(),
+              event.to()
+      );
     } catch (OptimisticLockException | ObjectOptimisticLockingFailureException ex) {
-      log.warn("Optimistic locking conflict while processing inventory message for orderId={} productId={}: {}",
-          event.orderId(), event.productId(), ex.getMessage());
-      throw new AmqpRejectAndDontRequeueException("Optimistic locking conflict, sending to DLQ", ex);
+      log.warn(
+              "Optimistic locking conflict while processing inventory message for orderId={} productId={}: {}",
+              event.orderId(),
+              event.productId(),
+              ex.getMessage()
+      );
+
+      throw new AmqpRejectAndDontRequeueException(
+              "Optimistic locking conflict, sending to DLQ",
+              ex
+      );
     }
   }
 }
