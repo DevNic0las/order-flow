@@ -21,14 +21,14 @@ public class OrderController {
 private final OrderService orderService;
 
 
-@PostMapping("/orders")
+@PostMapping
   public ResponseEntity<OrderResponseDto> createOrder(Authentication authentication,
                                                       @Valid @RequestBody OrderRequestDto orderRequestDto){
   String userId = authentication.getName();
   return ResponseEntity.ok(orderService.createOrder(orderRequestDto, userId));
 }
 
-@GetMapping("/orders")
+@GetMapping
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<List<OrderResponseDto>> getOrders(){
   return ResponseEntity.ok(orderService.getAllOrders());

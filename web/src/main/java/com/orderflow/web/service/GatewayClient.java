@@ -181,7 +181,7 @@ public class GatewayClient {
     public OrderCreated createOrder(String jwt, Long productId, Integer quantity) {
         try {
             OrderResponse response = gatewayRestClient.post()
-                    .uri("/orders/orders")
+                    .uri("/orders/")
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwt)
                     .body(new CreateOrderRequest(productId, quantity))
                     .retrieve()
@@ -215,7 +215,7 @@ public class GatewayClient {
     public List<OrderViewDto> getOrders(String jwt) {
         try {
             return gatewayRestClient.get()
-                    .uri("/orders/orders")
+                    .uri("/orders/")
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwt)
                     .retrieve()
                     .body(ORDER_LIST_TYPE);

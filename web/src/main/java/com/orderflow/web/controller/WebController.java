@@ -1,5 +1,6 @@
 package com.orderflow.web.controller;
 
+import com.orderflow.authsecurity.JwtTokenValidator;
 import com.orderflow.web.service.GatewayClient;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -28,7 +29,26 @@ public class WebController {
     private static final String JWT_SESSION_ATTRIBUTE = "JWT";
 
     private final GatewayClient gatewayClient;
+    private final JwtTokenValidator jwtTokenValidator;
     private SecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
+
+    /**
+     * Recupera o JWT da sessão e valida assinatura/expiração com o JwtTokenValidator do auth-security.
+     *
+     * @return o jwt válido, ou null (invalidando a sessão) se ausente, malformado ou com assinatura inválida.
+     */
+    private String validSessionJwt(HttpSession session) {
+        String jwt = (String) session.getAttribute(JWT_SESSION_ATTRIBUTE);
+        if (jwt == null || jwt.isBlank()) {
+            return null;
+        }
+        if (!jwtTokenValidator.isTokenValid(jwt)) {
+            log.warn("Session JWT is invalid or expired; invalidating session");
+            session.invalidate();
+            return null;
+        }
+        return jwt;
+    }
 
     @GetMapping("/login")
     public String loginPage(@RequestParam(value = "error", required = false) String error,
@@ -169,8 +189,8 @@ public class WebController {
 
     @GetMapping("/dashboard")
     public String dashboard(HttpSession session, Model model) {
-        String jwt = (String) session.getAttribute(JWT_SESSION_ATTRIBUTE);
-        if (jwt == null || jwt.isBlank()) {
+        String jwt = validSessionJwt(session);
+        if (jwt == null) {
             return "redirect:/login";
         }
 
@@ -186,8 +206,8 @@ public class WebController {
 
     @GetMapping("/catalog")
     public String catalog(HttpSession session, Model model) {
-        String jwt = (String) session.getAttribute(JWT_SESSION_ATTRIBUTE);
-        if (jwt == null || jwt.isBlank()) {
+        String jwt = validSessionJwt(session);
+        if (jwt == null) {
             return "redirect:/login";
         }
 
@@ -203,8 +223,8 @@ public class WebController {
 
     @GetMapping("/buy")
     public String buyPage(HttpSession session, Model model) {
-        String jwt = (String) session.getAttribute(JWT_SESSION_ATTRIBUTE);
-        if (jwt == null || jwt.isBlank()) {
+        String jwt = validSessionJwt(session);
+        if (jwt == null) {
             return "redirect:/login";
         }
 
@@ -223,8 +243,8 @@ public class WebController {
                         @RequestParam Integer quantity,
                         HttpSession session,
                         Model model) {
-        String jwt = (String) session.getAttribute(JWT_SESSION_ATTRIBUTE);
-        if (jwt == null || jwt.isBlank()) {
+        String jwt = validSessionJwt(session);
+        if (jwt == null) {
             return "redirect:/login";
         }
 
@@ -273,22 +293,17 @@ public class WebController {
     }
 
     private String[] resolveRoles(String jwt) {
-        try {
-            String[] parts = jwt.split("\\.");
-            byte[] payload = java.util.Base64.getUrlDecoder().decode(parts[1]);
-            com.fasterxml.jackson.databind.JsonNode claims =
-                    new com.fasterxml.jackson.databind.ObjectMapper().readTree(payload);
-            com.fasterxml.jackson.databind.JsonNode roles = claims.get("roles");
-            if (roles != null && roles.isArray() && !roles.isEmpty()) {
-                String[] result = new String[roles.size()];
-                for (int i = 0; i < roles.size(); i++) {
-                    result[i] = roles.get(i).asText();
-                }
-                return result;
-            }
-        } catch (Exception ex) {
-            log.warn("Failed to extract roles from JWT; falling back to ROLE_CUSTOMER", ex);
+        if (!jwtTokenValidator.isTokenValid(jwt)) {
+            throw new IllegalArgumentException("JWT signature validation failed; rejecting token");
         }
-        return new String[]{"ROLE_CUSTOMER"};
+        try {
+            List<String> roles = jwtTokenValidator.extractRoles(jwt);
+            return roles.isEmpty()
+                    ? new String[]{"ROLE_CUSTOMER"}
+                    : roles.toArray(new String[0]);
+        } catch (Exception ex) {
+            log.warn("Failed to read roles claim from valid JWT; falling back to ROLE_CUSTOMER", ex);
+            return new String[]{"ROLE_CUSTOMER"};
+        }
     }
 }
