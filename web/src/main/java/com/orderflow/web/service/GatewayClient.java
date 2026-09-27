@@ -185,7 +185,7 @@ public class GatewayClient {
             OrderResponse response = gatewayRestClient.post()
                     .uri("/orders/")
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwt)
-                    .header("X-Idempotency-Key", idempotencyKey)
+                    .header("Idempotency-Key", idempotencyKey)
                     .body(new CreateOrderRequest(productId, quantity))
                     .retrieve()
                     .body(OrderResponse.class);
