@@ -31,11 +31,15 @@ public class WebController {
     @GetMapping("/login")
     public String loginPage(@RequestParam(value = "error", required = false) String error,
                             @RequestParam(value = "integration", required = false) String integration,
+                            @RequestParam(value = "verified", required = false) String verified,
                             Model model) {
+
         if (error != null) {
             model.addAttribute("error", "E-mail ou senha inválidos.");
         } else if (integration != null) {
             model.addAttribute("error", "Erro ao conectar com o serviço de autenticação.");
+        } else if (verified != null) {
+            model.addAttribute("verified", true);
         }
         return "login";
     }
@@ -61,13 +65,104 @@ public class WebController {
         }
 
         session.setAttribute(JWT_SESSION_ATTRIBUTE, jwt);
+        authenticateSession(email, request, response);
 
-        Authentication authentication = new UsernamePasswordAuthenticationToken(
-                email, null, AuthorityUtils.createAuthorityList("ROLE_USER"));
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        securityContextRepository.saveContext(SecurityContextHolder.getContext(), request, response);
+
+
 
         return "redirect:/dashboard";
+    }
+
+    @GetMapping("/register")
+    public String registerPage() {
+        return "register";
+    }
+
+    @PostMapping("/register")
+    public String doRegister(@RequestParam String name,
+                             @RequestParam String email,
+                             @RequestParam String password,
+                             Model model) {
+        String verificationToken;
+        try {
+            verificationToken = gatewayClient.register(name, email, password);
+        } catch (GatewayClient.GatewayIntegrationException ex) {
+            log.error("Integration failure during register for email={}", email, ex);
+            model.addAttribute("error", "Erro ao conectar com o serviço de autenticação.");
+            return "register";
+        }
+
+        if (verificationToken == null || verificationToken.isBlank()) {
+            model.addAttribute("error", "Não foi possível criar a conta. Verifique os dados e tente novamente.");
+            return "register";
+        }
+
+        return "redirect:/verifycode?token=" + verificationToken;
+    }
+
+    @GetMapping("/verifycode")
+    public String verifyCodePage(@RequestParam String token,
+                                 @RequestParam(value = "email", required = false) String email,
+                                 @RequestParam(value = "error", required = false) String error,
+                                 @RequestParam(value = "resent", required = false) String resent,
+                                 @RequestParam(value = "cooldownSeconds", required = false) Long cooldownSeconds,
+                                 Model model) {
+        model.addAttribute("token", token);
+        model.addAttribute("email", email);
+        if (error != null) {
+            model.addAttribute("error", "Código inválido ou expirado.");
+        }
+        model.addAttribute("resent", resent != null);
+        model.addAttribute("cooldownSeconds", cooldownSeconds);
+        return "verify-code";
+    }
+
+    @PostMapping("/verifycode")
+    public String doVerifyCode(@RequestParam String token,
+                               @RequestParam String code,
+                               HttpSession session,
+                               @RequestParam(value = "email", required = false) String email,
+                               Model model) {
+        String jwt;
+        try {
+            jwt = gatewayClient.verifyCode(token, code);
+        } catch (GatewayClient.GatewayIntegrationException ex) {
+            log.error("Integration failure during verifycode", ex);
+            return "redirect:/verifycode?token=" + token + "&error";
+        }
+
+        if (jwt == null || jwt.isBlank()) {
+            model.addAttribute("token", token);
+            model.addAttribute("email", email);
+            model.addAttribute("error", "Código inválido ou expirado.");
+            return "verify-code";
+        }
+
+        session.setAttribute(JWT_SESSION_ATTRIBUTE, jwt);
+        return "redirect:/login?verified";
+    }
+
+    @PostMapping("/resend-code")
+    public String doResendCode(@RequestParam String token,
+                               @RequestParam(value = "email", required = false) String email,
+                               Model model) {
+        GatewayClient.ResendOutcome outcome;
+        try {
+            outcome = gatewayClient.resendCode(token);
+        } catch (GatewayClient.GatewayIntegrationException ex) {
+            log.error("Integration failure during resend-code", ex);
+            return "redirect:/verifycode?token=" + token + "&error";
+        }
+
+        if (outcome.resent()) {
+            return "redirect:/verifycode?token=" + token + "&resent";
+        }
+
+        if (outcome.cooldownSeconds() != null && outcome.cooldownSeconds() > 0) {
+            return "redirect:/verifycode?token=" + token + "&resent&cooldownSeconds=" + outcome.cooldownSeconds();
+        }
+
+        return "redirect:/verifycode?token=" + token + "&error";
     }
 
     @GetMapping("/dashboard")
@@ -108,5 +203,12 @@ public class WebController {
     public String logout(HttpSession session) {
         session.invalidate();
         return "redirect:/login";
+    }
+
+    private void authenticateSession(String email, HttpServletRequest request, HttpServletResponse response) {
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                email, null, AuthorityUtils.createAuthorityList("ROLE_USER"));
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        securityContextRepository.saveContext(SecurityContextHolder.getContext(), request, response);
     }
 }

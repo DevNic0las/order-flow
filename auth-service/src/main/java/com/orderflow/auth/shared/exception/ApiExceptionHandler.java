@@ -63,7 +63,8 @@ public class ApiExceptionHandler {
     @ExceptionHandler(VerificationCooldownException.class)
     public ResponseEntity<ApiError> handleVerificationCooldown(VerificationCooldownException ex) {
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
-                .body(new ApiError(ex.getMessage()));
+                .header("Retry-After", String.valueOf(ex.getRetryAfterSeconds()))
+                .body(new ApiError(ex.getMessage(), ex.getRetryAfterSeconds()));
     }
 
     @ExceptionHandler(Exception.class)

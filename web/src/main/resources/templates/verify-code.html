@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Confirmar conta · Order Flow</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+  <div class="auth-shell">
+    <div class="auth-card">
+      <p class="brand">Order Flow</p>
+      <p class="brand-sub">
+        enviamos um código pro seu e-mail
+        <span th:if="${email}" th:text="'(' + ${email} + ')'"></span>
+      </p>
+
+      <div class="auth-error" th:if="${error}" th:text="${error}">
+        Código inválido ou expirado.
+      </div>
+
+      <div class="flash" th:if="${resent}">
+        Código reenviado. Confira sua caixa de entrada.
+      </div>
+
+      <form th:action="@{/verifycode}" method="post">
+        <input type="hidden" name="token" th:value="${token}">
+        <div class="field">
+          <label for="code">Código de 6 dígitos</label>
+          <input type="text" id="code" name="code" inputmode="numeric" pattern="[0-9]{6}"
+                 maxlength="6" autocomplete="one-time-code" required autofocus>
+        </div>
+        <button type="submit" class="btn">Confirmar</button>
+      </form>
+
+      <form th:action="@{/resend-code}" method="post" class="resend-form">
+        <input type="hidden" name="token" th:value="${token}">
+        <button type="submit"
+                class="btn-link"
+                th:disabled="${cooldownSeconds != null and cooldownSeconds > 0}">
+          <span th:if="${cooldownSeconds != null and cooldownSeconds > 0}"
+                th:text="'Reenviar em ' + ${cooldownSeconds} + 's'">Reenviar em 30s</span>
+          <span th:unless="${cooldownSeconds != null and cooldownSeconds > 0}">Reenviar código</span>
+        </button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

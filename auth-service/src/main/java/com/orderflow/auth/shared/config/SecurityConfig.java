@@ -41,9 +41,7 @@ public class SecurityConfig{
                             // allow both with and without servlet context-path
                             "/login",
                             "/register",
-                            "/verifycode/email",
                             "/verifycode",
-                            "/register/form",
                             "/resend-code",
                             "/error"
                     ).permitAll()

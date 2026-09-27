@@ -22,7 +22,7 @@ public class OrderController {
 private final OrderService orderService;
 
 
-@PostMapping
+@PostMapping("/orders")
 
   public ResponseEntity<OrderResponseDto> createOrder(   Authentication authentication,
                                                          @Valid @RequestBody OrderRequestDto orderRequestDto){
@@ -30,7 +30,7 @@ private final OrderService orderService;
   return ResponseEntity.ok(orderService.createOrder(orderRequestDto, userId));
 }
 
-@GetMapping
+@GetMapping("/orders")
   public ResponseEntity<List<OrderResponseDto>> getOrders(){
   return ResponseEntity.ok(orderService.getAllOrders());
 }

@@ -286,3 +286,42 @@ body {
   font-size: 13px;
   margin-bottom: 16px;
 }
+
+.auth-switch {
+  text-align: center;
+  font-size: 13px;
+  color: var(--slate);
+  margin: 20px 0 0;
+}
+
+.auth-switch a {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.resend-form { margin-top: 14px; text-align: center; }
+
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--rust-ink);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  padding: 0;
+}
+
+.btn-link:disabled {
+  color: var(--slate);
+  text-decoration: none;
+  cursor: default;
+}
+
+#code {
+  letter-spacing: 0.3em;
+  text-align: center;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 18px;
+}
