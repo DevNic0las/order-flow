@@ -25,11 +25,12 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
 
   private static final List<String> PUBLIC_PATHS = List.of(
           "/auth/login", "/auth/register", "/auth/verifycode", "/auth/resend-code",
-          "/login", "/register", "/verifycode", "/resend-code", "/dashboard", "/catalog", "/buy"
+          "/login", "/register", "/verifycode", "/resend-code", "/dashboard", "/catalog", "/buy",
+          "/logout"
   );
 
   private static final List<String> PUBLIC_PATH_FRAGMENTS = List.of(
-          "/swagger-ui", "/v3/api-docs"
+          "/swagger-ui", "/v3/api-docs", "/css"
   );
 
   private SecretKey key() {

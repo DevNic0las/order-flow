@@ -166,7 +166,7 @@ class InventoryServiceTest {
    void shouldCreateProductSuccessfully() {
        when(inventoryRepository.save(any(Inventory.class))).thenReturn(inventory);
 
-       InventoryProductDto result = inventoryService.createProduct(inventoryProductDto);
+       InventoryProductDto result = inventoryService.createProduct(inventoryProductDto, "idempotency-key");
 
        assertNotNull(result);
        assertEquals("Test Product", result.productName());
