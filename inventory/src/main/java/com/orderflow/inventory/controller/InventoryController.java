@@ -28,8 +28,10 @@ public class InventoryController {
     @PostMapping("/products")
     @PreAuthorize("hasRole('ADMIN')")
 
-    public ResponseEntity<InventoryProductDto> createProduct(@Valid @RequestBody InventoryProductDto productDto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(inventoryService.createProduct(productDto));
+    public ResponseEntity<InventoryProductDto> createProduct(@Valid @RequestBody InventoryProductDto productDto,
+    @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(inventoryService.createProduct(productDto, idempotencyKey));
     }
 
     @GetMapping("/products")

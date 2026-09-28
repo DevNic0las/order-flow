@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -13,12 +14,14 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.orderflow.inventory.domain.Inventory;
+import com.orderflow.inventory.domain.InventoryIdempotencyKey;
 import com.orderflow.inventory.domain.ProcessedInventoryEvent;
 import com.orderflow.inventory.dto.InventoryProductDto;
 import com.orderflow.inventory.dto.InventoryResultEventDto;
 import com.orderflow.inventory.exception.InvalidInventoryQuantityException;
 import com.orderflow.inventory.exception.InventoryNotFoundException;
 import com.orderflow.inventory.messaging.InventoryPublisher;
+import com.orderflow.inventory.repository.InventoryIdempotencyKeyRepository;
 import com.orderflow.inventory.repository.InventoryRepository;
 import com.orderflow.inventory.repository.ProcessedInventoryEventRepository;
 import java.util.Optional;
@@ -46,6 +49,9 @@ class InventoryServiceTest {
 
    @Mock
    private ProcessedInventoryEventRepository processedInventoryEventRepository;
+
+   @Mock
+   private InventoryIdempotencyKeyRepository inventoryIdempotencyKeyRepository;
 
    private InventoryProductDto inventoryProductDto;
    private Inventory inventory;
@@ -162,20 +168,40 @@ class InventoryServiceTest {
        verifyNoInteractions(inventoryPublisher);
    }
 
-   @Test
-   void shouldCreateProductSuccessfully() {
-       when(inventoryRepository.save(any(Inventory.class))).thenReturn(inventory);
+  @Test
+  void shouldCreateProductSuccessfully() {
 
-       InventoryProductDto result = inventoryService.createProduct(inventoryProductDto);
+    when(inventoryIdempotencyKeyRepository.findInventoryIdByIdempotencyKey("idempotency-key"))
+            .thenReturn(Optional.empty());
 
-       assertNotNull(result);
-       assertEquals("Test Product", result.productName());
-       assertEquals(10, result.quantity());
+    when(inventoryRepository.save(any(Inventory.class)))
+            .thenAnswer(invocation -> {
+              Inventory inventory = invocation.getArgument(0);
+              inventory.setId(1L);
+              return inventory;
+            });
 
-       ArgumentCaptor<Inventory> savedInventoryCaptor = ArgumentCaptor.forClass(Inventory.class);
-       verify(inventoryRepository).save(savedInventoryCaptor.capture());
-       Inventory savedInventory = savedInventoryCaptor.getValue();
-       assertEquals("Test Product", savedInventory.getProductName());
-       assertEquals(10, savedInventory.getQuantity());
-   }
+
+    InventoryProductDto result =
+            inventoryService.createProduct(inventoryProductDto, "idempotency-key");
+
+    assertNotNull(result);
+    assertEquals("Test Product", result.productName());
+    assertEquals(10, result.quantity());
+
+    ArgumentCaptor<Inventory> savedInventoryCaptor =
+            ArgumentCaptor.forClass(Inventory.class);
+
+    verify(inventoryRepository).save(savedInventoryCaptor.capture());
+
+    Inventory savedInventory = savedInventoryCaptor.getValue();
+
+    assertEquals("Test Product", savedInventory.getProductName());
+    assertEquals(10, savedInventory.getQuantity());
+
+    verify(inventoryIdempotencyKeyRepository)
+            .findInventoryIdByIdempotencyKey("idempotency-key");
+
+    verify(inventoryRepository, never()).findById(anyLong());
+  }
 }

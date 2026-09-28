@@ -7,16 +7,19 @@ import com.orderflow.inventory.dto.InventoryResultEventDto;
 import com.orderflow.inventory.exception.InvalidInventoryQuantityException;
 import com.orderflow.inventory.exception.InventoryNotFoundException;
 import com.orderflow.inventory.messaging.InventoryPublisher;
+import com.orderflow.inventory.repository.InventoryIdempotencyKeyRepository;
 import com.orderflow.inventory.repository.InventoryRepository;
 
 import com.orderflow.inventory.repository.ProcessedInventoryEventRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.flywaydb.core.internal.util.StringUtils;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -27,7 +30,7 @@ public class InventoryService
   private final InventoryRepository inventoryRepository;
   private final InventoryPublisher inventoryPublisher;
   private final ProcessedInventoryEventRepository processedInventoryEventRepository;
-
+  private final InventoryIdempotencyKeyRepository inventoryIdempotencyKeyRepo;
   @Transactional
   public void decreaseProductStock(
           UUID eventId,
@@ -94,7 +97,19 @@ public class InventoryService
   }
 
 @Transactional
-public InventoryProductDto createProduct(InventoryProductDto productDto) {
+public InventoryProductDto createProduct(InventoryProductDto productDto, String idempotencyKey) {
+
+  if(StringUtils.hasText(idempotencyKey)){
+      Optional<Long> existingInventoryId = inventoryIdempotencyKeyRepo.findInventoryIdByIdempotencyKey(idempotencyKey);
+      if(existingInventoryId.isPresent()){
+          Long inventoryId = existingInventoryId.get();
+          Inventory inventory = inventoryRepository.findById(inventoryId)
+                  .orElseThrow(() -> new IllegalStateException("Inventory not found for idempotency key: " + idempotencyKey));
+          log.info("Returning existing inventory for idempotency key. inventoryId={}, key={}", inventoryId, idempotencyKey);
+          return new InventoryProductDto(inventory.getId(), inventory.getProductName(), inventory.getQuantity());
+      }
+  }
+
     Inventory inventory = new Inventory();
     inventory.setProductName(productDto.productName());
     inventory.setQuantity(productDto.quantity());
@@ -107,7 +122,4 @@ public List<InventoryProductDto> getAllProducts() {
     List<Inventory> inventory = inventoryRepository.findAll();
     return inventory.stream().map(i-> new InventoryProductDto(i.getId(), i.getProductName(),i.getQuantity())).toList();
 }
-
-
-
 }
