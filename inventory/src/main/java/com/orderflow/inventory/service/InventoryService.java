@@ -4,7 +4,6 @@ import com.orderflow.inventory.domain.Inventory;
 import com.orderflow.inventory.domain.ProcessedInventoryEvent;
 import com.orderflow.inventory.dto.InventoryProductDto;
 import com.orderflow.inventory.dto.InventoryResultEventDto;
-import com.orderflow.inventory.dto.PaymentRequestEventDto;
 import com.orderflow.inventory.exception.InvalidInventoryQuantityException;
 import com.orderflow.inventory.exception.InventoryNotFoundException;
 import com.orderflow.inventory.messaging.InventoryPublisher;
@@ -12,7 +11,6 @@ import com.orderflow.inventory.repository.InventoryIdempotencyKeyRepository;
 import com.orderflow.inventory.repository.InventoryRepository;
 
 import com.orderflow.inventory.repository.ProcessedInventoryEventRepository;
-import com.orderflow.inventory.repository.ProcessedPaymentCompensationEventRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +31,6 @@ public class InventoryService
   private final InventoryPublisher inventoryPublisher;
   private final ProcessedInventoryEventRepository processedInventoryEventRepository;
   private final InventoryIdempotencyKeyRepository inventoryIdempotencyKeyRepo;
-  private final ProcessedPaymentCompensationEventRepository processedPaymentCompensationEventRepository;
   @Transactional
   public void decreaseProductStock(
           UUID eventId,
@@ -84,12 +81,6 @@ public class InventoryService
               productId,
               quantity
       );
-
-      // Estoque reservado com sucesso: o pagamento decide. Só o resultado
-      // negativo (estoque insuficiente) publica direto em order.result.exchange.
-      inventoryPublisher.publishPaymentRequest(
-              new PaymentRequestEventDto(orderId, productId, quantity, email, eventId)
-      );
     } else {
       log.warn(
               "Insufficient stock for productId={}, requested={}, available={}",
@@ -97,47 +88,12 @@ public class InventoryService
               quantity,
               inventory.getQuantity()
       );
-
-      InventoryResultEventDto result =
-              new InventoryResultEventDto(orderId, false, email, eventId);
-
-      inventoryPublisher.publishInventoryResult(result);
-    }
-  }
-
-  /**
-   * Compensação: devolve ao estoque a quantidade reservada quando o pagamento
-   * recusa. Idempotente via INSERT ... ON CONFLICT (event_id) DO NOTHING.
-   */
-  @Transactional
-  public void compensateReservation(
-          UUID eventId,
-          Long orderId,
-          Long productId,
-          Integer quantity) {
-
-    int inserted = processedPaymentCompensationEventRepository.insertIfNotExists(eventId);
-    if (inserted == 0) {
-      log.info("Compensation event already processed, ignoring. eventId={}", eventId);
-      return;
     }
 
-    if (quantity == null || quantity <= 0) {
-      throw new InvalidInventoryQuantityException("Quantity must be greater than zero");
-    }
+    InventoryResultEventDto result =
+            new InventoryResultEventDto(orderId, approved, email, eventId);
 
-    Inventory inventory = inventoryRepository.findById(productId)
-            .orElseThrow(() -> new InventoryNotFoundException("Product not found in inventory"));
-
-    inventory.setQuantity(inventory.getQuantity() + quantity);
-    inventoryRepository.save(inventory);
-
-    log.info(
-            "Compensated reservation for orderId={}: restored {} units of productId={}",
-            orderId,
-            quantity,
-            productId
-    );
+    inventoryPublisher.publishInventoryResult(result);
   }
 
 @Transactional
