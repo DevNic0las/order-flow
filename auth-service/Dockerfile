@@ -9,6 +9,7 @@ COPY auth-service/pom.xml auth-service/
 COPY auth-security/pom.xml auth-security/
 COPY auth-security/src auth-security/src
 COPY gateway/pom.xml gateway/
+COPY web/pom.xml web/
 RUN mvn -pl auth-service -am dependency:go-offline -q
 
 COPY auth-service/src auth-service/src
