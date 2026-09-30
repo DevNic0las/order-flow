@@ -1,6 +1,8 @@
 package com.orderflow.web.controller;
 
 import com.orderflow.authsecurity.JwtTokenValidator;
+import com.orderflow.web.dto.OrderCreatedDto;
+import com.orderflow.web.dto.ResendCodeOutcomeDto;
 import com.orderflow.web.service.GatewayClient;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -177,7 +179,7 @@ public class WebController {
     public String doResendCode(@RequestParam String token,
                                @RequestParam(value = "email", required = false) String email,
                                Model model) {
-        GatewayClient.ResendOutcome outcome;
+        ResendCodeOutcomeDto outcome;
         try {
             outcome = gatewayClient.resendCode(token);
         } catch (GatewayClient.GatewayIntegrationException ex) {
@@ -259,24 +261,27 @@ public class WebController {
             return "redirect:/login";
         }
 
-        GatewayClient.OrderCreated created;
+        OrderCreatedDto created;
         try {
             created = gatewayClient.createOrder(jwt, productId, quantity, idempotencyKey);
         } catch (GatewayClient.GatewayIntegrationException ex) {
             log.error("Integration failure during buy for productId={}", productId, ex);
             model.addAttribute("error", "Erro ao conectar com o serviço de pedidos.");
             model.addAttribute("products", reloadProducts(jwt));
+            model.addAttribute("idempotencyKey", UUID.randomUUID().toString());
             return "buy";
         }
 
         if (created == null) {
             model.addAttribute("error", "Não foi possível registrar o pedido. Verifique o estoque e tente novamente.");
             model.addAttribute("products", reloadProducts(jwt));
+            model.addAttribute("idempotencyKey", UUID.randomUUID().toString());
             return "buy";
         }
 
         model.addAttribute("confirmation", created);
         model.addAttribute("products", reloadProducts(jwt));
+        model.addAttribute("idempotencyKey", UUID.randomUUID().toString());
         return "buy";
     }
 

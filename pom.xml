@@ -17,6 +17,7 @@
         <module>gateway</module>
         <module>auth-security</module>
         <module>web</module>
+        <module>payment-service</module>
 
     </modules>
 

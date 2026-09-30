@@ -2,10 +2,15 @@ package com.orderflow.web.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.orderflow.web.dto.AuthResponseDto;
+import com.orderflow.web.dto.CreateOrderRequestDto;
+import com.orderflow.web.dto.CreateOrderResponseDto;
 import com.orderflow.web.dto.LoginRequestDto;
+import com.orderflow.web.dto.OrderCreatedDto;
 import com.orderflow.web.dto.OrderViewDto;
 import com.orderflow.web.dto.ProductViewDto;
 import com.orderflow.web.dto.RegisterRequestDto;
+import com.orderflow.web.dto.RegisterResponseDto;
+import com.orderflow.web.dto.ResendCodeOutcomeDto;
 import com.orderflow.web.dto.ResendCodeRequestDto;
 import com.orderflow.web.dto.VerifyCodeRequestDto;
 import lombok.RequiredArgsConstructor;
@@ -73,11 +78,11 @@ public class GatewayClient {
      */
     public String register(String name, String email, String password) {
         try {
-            RegisterResponse response = gatewayRestClient.post()
+            RegisterResponseDto response = gatewayRestClient.post()
                     .uri("/auth/register")
                     .body(new RegisterRequestDto(email, password, name))
                     .retrieve()
-                    .body(RegisterResponse.class);
+                    .body(RegisterResponseDto.class);
 
             if (response == null || response.token() == null || response.token().isBlank()) {
                 log.error("Register via gateway returned empty token body");
@@ -126,25 +131,25 @@ public class GatewayClient {
     /**
      * Reenvia o código de verificação.
      *
-     * @return ResendOutcome com flag de cooldown; ResendOutcome.cooldownSeconds preenchido
+     * @return ResendCodeOutcomeDto com flag de cooldown; cooldownSeconds preenchido
      *         quando o auth-service respondeu 429 (cooldown ativo).
      */
-    public ResendOutcome resendCode(String token) {
+    public ResendCodeOutcomeDto resendCode(String token) {
         try {
             gatewayRestClient.post()
                     .uri("/auth/resend-code")
                     .body(new ResendCodeRequestDto(token))
                     .retrieve()
                     .toBodilessEntity();
-            return new ResendOutcome(true, null);
+            return new ResendCodeOutcomeDto(true, null);
         } catch (HttpClientErrorException.TooManyRequests ex) {
             Long retryAfter = extractRetryAfter(ex);
             log.info("Resend-code via gateway: cooldown ativo ({}s)", retryAfter);
-            return new ResendOutcome(false, retryAfter);
+            return new ResendCodeOutcomeDto(false, retryAfter);
         } catch (HttpClientErrorException ex) {
             log.warn("Resend-code via gateway rejected: status={} body={}",
                     ex.getStatusCode(), ex.getResponseBodyAsString());
-            return new ResendOutcome(false, null);
+            return new ResendCodeOutcomeDto(false, null);
         } catch (RestClientException ex) {
             log.error("Resend-code via gateway failed: {}", ex.getMessage());
             throw new GatewayIntegrationException("Erro ao conectar com o serviço de autenticação", ex);
@@ -175,26 +180,33 @@ public class GatewayClient {
 
     /**
      * Cria um pedido. O customerName é preenchido pelo backend (usuário do JWT).
+     * O header Idempotency-Key só é enviado quando presente — evita
+     * IllegalArgumentException do RestClient ao construir um header nulo.
      *
-     * @return OrderCreated com o id do pedido em caso de sucesso (2xx),
+     * @return OrderCreatedDto com o id do pedido em caso de sucesso (2xx),
      *         null em rejeição de dados (400/403 — validação, estoque insuficiente, role),
      *         ou lança GatewayIntegrationException para outras falhas.
      */
-    public OrderCreated createOrder(String jwt, Long productId, Integer quantity,String idempotencyKey) {
+    public OrderCreatedDto createOrder(String jwt, Long productId, Integer quantity, String idempotencyKey) {
         try {
-            OrderResponse response = gatewayRestClient.post()
+            var request = gatewayRestClient.post()
                     .uri("/orders/")
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwt)
-                    .header("Idempotency-Key", idempotencyKey)
-                    .body(new CreateOrderRequest(productId, quantity))
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwt);
+
+            if (idempotencyKey != null && !idempotencyKey.isBlank()) {
+                request = request.header("Idempotency-Key", idempotencyKey);
+            }
+
+            CreateOrderResponseDto response = request
+                    .body(new CreateOrderRequestDto(productId, quantity))
                     .retrieve()
-                    .body(OrderResponse.class);
+                    .body(CreateOrderResponseDto.class);
 
             if (response == null || response.id() == null) {
                 log.error("POST /orders via gateway returned empty body");
                 throw new GatewayIntegrationException("Resposta vazia do serviço de pedidos");
             }
-            return new OrderCreated(response.id(), response.status());
+            return new OrderCreatedDto(response.id(), response.status());
         } catch (HttpClientErrorException ex) {
             log.warn("POST /orders via gateway rejected: status={} body={}",
                     ex.getStatusCode(), ex.getResponseBodyAsString());
@@ -203,16 +215,6 @@ public class GatewayClient {
             log.error("POST /orders via gateway failed: {}", ex.getMessage());
             throw new GatewayIntegrationException("Erro ao conectar com o serviço de pedidos", ex);
         }
-    }
-
-    public record OrderCreated(Long orderId, String status) {
-    }
-
-    public record OrderResponse(Long id, String customerName, Long productId,
-                                Integer quantity, String status) {
-    }
-
-    public record CreateOrderRequest(Long productId, Integer quantity) {
     }
 
     public List<OrderViewDto> getOrders(String jwt) {
@@ -239,12 +241,6 @@ public class GatewayClient {
             log.error("GET /inventory/products via gateway failed: {}", ex.getMessage());
             throw new GatewayIntegrationException("Erro ao consultar estoque no gateway", ex);
         }
-    }
-
-    public record ResendOutcome(boolean resent, Long cooldownSeconds) {
-    }
-
-    public record RegisterResponse(String token) {
     }
 
     public static class GatewayIntegrationException extends RuntimeException {
