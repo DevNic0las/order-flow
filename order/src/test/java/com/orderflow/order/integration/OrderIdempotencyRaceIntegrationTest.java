@@ -28,7 +28,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @SpringBootTest(properties = {
     "spring.rabbitmq.listener.simple.auto-startup=false",
     "spring.rabbitmq.listener.direct.auto-startup=false",
-    "spring.jpa.open-in-view=false"
+    "spring.jpa.open-in-view=false",
+    "order.scheduling.enabled=false"
 })
 @Testcontainers
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
