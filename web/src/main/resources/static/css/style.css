@@ -1,6 +1,711 @@
-/* ─────────────────────────────────────────
-   BUY / PRODUCT SELECTION
-   ───────────────────────────────────────── */
+/* =========================================================
+   ORDER FLOW
+   Global stylesheet
+   ========================================================= */
+
+
+/* =========================================================
+   01. DESIGN TOKENS
+   ========================================================= */
+
+:root {
+  --bg: #efeee7;
+  --surface: #f7f6f1;
+  --surface-soft: #e9e8df;
+  --surface-hover: #faf9f4;
+
+  --ink: #1f2a2e;
+  --ink-soft: #4b5558;
+  --muted: #6b7280;
+
+  --line: #d8d5c9;
+  --line-strong: #b9b6aa;
+
+  --green: #4b6358;
+  --green-soft: #e4e9e5;
+
+  --orange: #b8541f;
+  --orange-soft: #f3e3d3;
+
+  --red: #a33d32;
+  --red-soft: #f0dfdc;
+
+  --yellow: #987126;
+  --yellow-soft: #eee5d0;
+
+  --white: #fffefa;
+
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: "Fraunces", Georgia, serif;
+  --font-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+
+  --radius: 4px;
+  --transition: 140ms ease;
+}
+
+
+/* =========================================================
+   02. RESET
+   ========================================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: var(--bg);
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+
+  background: var(--bg);
+  color: var(--ink);
+
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.5;
+
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+}
+
+::selection {
+  background: var(--orange-soft);
+  color: var(--ink);
+}
+
+
+/* =========================================================
+   03. GLOBAL SHELL
+   ========================================================= */
+
+.shell {
+  min-height: 100vh;
+  display: flex;
+}
+
+
+/* =========================================================
+   04. SIDEBAR
+   ========================================================= */
+
+.sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+
+  width: 228px;
+
+  display: flex;
+  flex-direction: column;
+
+  padding: 28px 18px;
+
+  background: var(--ink);
+  color: var(--bg);
+
+  border-right: 1px solid var(--ink);
+
+  z-index: 20;
+}
+
+.sidebar-brand {
+  padding: 0 10px;
+  margin-bottom: 42px;
+}
+
+.sidebar-brand .brand {
+  margin: 0;
+
+  color: var(--bg);
+
+  font-family: var(--font-display);
+  font-size: 25px;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+
+.sidebar-brand .brand-sub {
+  margin: 3px 0 0;
+
+  color: #9ca6a6;
+
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebar-nav a {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+
+  min-height: 40px;
+  padding: 9px 10px;
+
+  color: #aeb6b4;
+  text-decoration: none;
+
+  border-left: 2px solid transparent;
+
+  transition:
+          color var(--transition),
+          background var(--transition),
+          border-color var(--transition);
+}
+
+.sidebar-nav a:hover {
+  color: var(--bg);
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.sidebar-nav a.active {
+  color: var(--bg);
+  background: rgba(255, 255, 255, 0.08);
+  border-left-color: var(--orange);
+}
+
+.sidebar-nav .nav-icon {
+  width: 18px;
+
+  color: currentColor;
+
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-align: center;
+}
+
+.sidebar-nav .nav-label {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 18px 10px 0;
+
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-footer a {
+  color: #9ca6a6;
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.sidebar-footer a:hover {
+  color: var(--bg);
+}
+
+
+/* =========================================================
+   05. MAIN CONTENT
+   ========================================================= */
+
+.main {
+  width: calc(100% - 228px);
+  min-height: 100vh;
+
+  margin-left: 228px;
+  padding: 56px 64px 80px;
+}
+
+.main > * {
+  max-width: 1040px;
+}
+
+.page-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
+
+  margin-bottom: 6px;
+}
+
+.page-head h1 {
+  margin: 0;
+
+  color: var(--ink);
+
+  font-family: var(--font-display);
+  font-size: clamp(32px, 4vw, 46px);
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+
+.page-meta {
+  color: var(--muted);
+
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.page-sub {
+  max-width: 690px;
+
+  margin: 0 0 38px;
+
+  color: var(--muted);
+
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+
+/* =========================================================
+   06. SECTION HEADINGS
+   ========================================================= */
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 13px;
+}
+
+.section-heading::after {
+  content: "";
+
+  flex: 1;
+
+  height: 1px;
+
+  margin-left: 18px;
+
+  background: var(--line);
+}
+
+
+/* =========================================================
+   07. AUTH PAGES
+   login / register / verify-code
+   ========================================================= */
+
+.auth-shell {
+  min-height: 100vh;
+
+  display: grid;
+  place-items: center;
+
+  padding: 24px;
+
+  background:
+          radial-gradient(
+                  circle at 50% 0%,
+                  #f7f5ed 0,
+                  var(--bg) 48%,
+                  #e9e7de 100%
+          );
+}
+
+.auth-card {
+  width: min(420px, 100%);
+
+  padding: 42px;
+
+  background: rgba(247, 246, 241, 0.92);
+
+  border: 1px solid var(--line);
+
+  box-shadow:
+          0 18px 50px rgba(31, 42, 46, 0.06);
+}
+
+.auth-card .brand {
+  margin: 0;
+
+  color: var(--ink);
+
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.045em;
+}
+
+.brand-sub {
+  margin: 4px 0 30px;
+
+  color: var(--muted);
+
+  font-size: 13px;
+}
+
+.auth-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 17px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.field label {
+  color: var(--ink);
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.field input {
+  width: 100%;
+
+  padding: 12px 13px;
+
+  background: var(--white);
+  color: var(--ink);
+
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+
+  outline: none;
+
+  transition:
+          border-color var(--transition),
+          box-shadow var(--transition),
+          background var(--transition);
+}
+
+.field input:hover {
+  border-color: var(--line-strong);
+}
+
+.field input:focus {
+  background: #fff;
+  border-color: var(--ink);
+
+  box-shadow: 0 0 0 3px rgba(31, 42, 46, 0.06);
+}
+
+.auth-card .btn {
+  width: 100%;
+  margin-top: 5px;
+}
+
+.auth-switch {
+  margin: 24px 0 0;
+
+  color: var(--muted);
+
+  font-size: 12px;
+  text-align: center;
+}
+
+.auth-switch a {
+  color: var(--ink);
+
+  font-weight: 600;
+  text-decoration: none;
+
+  border-bottom: 1px solid var(--ink);
+}
+
+.auth-switch a:hover {
+  color: var(--orange);
+  border-color: var(--orange);
+}
+
+
+/* =========================================================
+   08. BUTTONS
+   ========================================================= */
+
+.btn {
+  min-height: 43px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  padding: 10px 17px;
+
+  background: var(--ink);
+  color: var(--bg);
+
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
+
+  font-size: 13px;
+  font-weight: 600;
+
+  transition:
+          background var(--transition),
+          border-color var(--transition),
+          transform var(--transition);
+}
+
+.btn:hover {
+  background: #2c393d;
+  border-color: #2c393d;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn:focus-visible {
+  outline: 3px solid var(--orange-soft);
+  outline-offset: 2px;
+}
+
+.btn-link {
+  padding: 0;
+
+  background: transparent;
+  color: var(--ink);
+
+  border: 0;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.btn-link:hover {
+  color: var(--orange);
+}
+
+.btn-link:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   09. FEEDBACK / FLASH MESSAGES
+   ========================================================= */
+
+.flash,
+.auth-error {
+  max-width: 760px;
+
+  margin-bottom: 24px;
+  padding: 13px 15px;
+
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--green);
+
+  background: var(--surface);
+
+  color: var(--ink-soft);
+
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.auth-error {
+  border-left-color: var(--red);
+  background: var(--red-soft);
+  color: #71352f;
+}
+
+.flash strong {
+  color: var(--ink);
+  font-family: var(--font-mono);
+}
+
+.stamp {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 4px 7px;
+
+  border: 1px solid transparent;
+  border-radius: 2px;
+
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.stamp-pending {
+  color: var(--yellow);
+  background: var(--yellow-soft);
+  border-color: #ded0ae;
+}
+
+.stamp-confirmed {
+  color: var(--green);
+  background: var(--green-soft);
+  border-color: #c7d2cb;
+}
+
+.stamp-rejected {
+  color: var(--red);
+  background: var(--red-soft);
+  border-color: #dec1bc;
+}
+
+
+/* =========================================================
+   10. TABLE / LEDGER
+   catalog + dashboard
+   ========================================================= */
+
+.ledger {
+  width: 100%;
+
+  border-collapse: collapse;
+
+  background: var(--surface);
+
+  border-top: 1px solid var(--ink);
+}
+
+.ledger th {
+  padding: 13px 15px;
+
+  color: var(--muted);
+
+  border-bottom: 1px solid var(--line);
+
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.ledger td {
+  padding: 17px 15px;
+
+  border-bottom: 1px solid var(--line);
+
+  color: var(--ink);
+
+  font-size: 13px;
+}
+
+.ledger tbody tr {
+  transition: background var(--transition);
+}
+
+.ledger tbody tr:hover {
+  background: var(--surface-hover);
+}
+
+.ledger .num {
+  text-align: right;
+}
+
+.order-id,
+.qty-value {
+  font-family: var(--font-mono);
+}
+
+.order-id {
+  color: var(--ink-soft);
+  font-size: 11px;
+}
+
+.customer {
+  font-weight: 500;
+}
+
+.timestamp {
+  color: var(--muted);
+
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.qty-value {
+  font-size: 12px;
+}
+
+.qty-low {
+  color: var(--orange);
+  font-weight: 600;
+}
+
+
+/* =========================================================
+   11. STOCK LEVEL
+   ========================================================= */
+
+.stock-fill {
+  width: 100%;
+  height: 5px;
+
+  overflow: hidden;
+
+  background: var(--surface-soft);
+}
+
+.stock-fill span {
+  display: block;
+  height: 100%;
+
+  background: var(--green);
+
+  transition: width 200ms ease;
+}
+
+.stock-fill.low span {
+  background: var(--orange);
+}
+
+
+/* =========================================================
+   12. EMPTY STATE
+   ========================================================= */
+
+.empty-state {
+  max-width: 760px;
+
+  padding: 42px 24px;
+
+  background: var(--surface);
+
+  border: 1px dashed var(--line-strong);
+
+  color: var(--muted);
+
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-align: center;
+}
+
+
+/* =========================================================
+   13. BUY / PRODUCT SELECTION
+   ========================================================= */
 
 .buy-form {
   max-width: 760px;
@@ -8,55 +713,75 @@
 
 .product-grid {
   display: grid;
+
   grid-template-columns: repeat(2, minmax(0, 1fr));
+
   gap: 12px;
+
   margin-top: 8px;
 }
 
 .product-card {
   position: relative;
+
   display: block;
+
   cursor: pointer;
 }
 
 .product-card > input {
   position: absolute;
+
+  width: 1px;
+  height: 1px;
+
   opacity: 0;
   pointer-events: none;
 }
 
 .product-card-content {
-  min-height: 138px;
-  padding: 18px;
+  min-height: 148px;
 
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 
-  background: #F7F6F1;
-  border: 1px solid #D8D5C9;
+  padding: 18px;
+
+  background: var(--surface);
+
+  border: 1px solid var(--line);
   border-radius: 3px;
 
   transition:
-          border-color 120ms ease,
-          background 120ms ease,
-          transform 120ms ease;
+          border-color var(--transition),
+          background var(--transition),
+          transform var(--transition);
 }
 
 .product-card:hover .product-card-content {
-  background: #FAF9F4;
-  border-color: #B9B6AA;
+  background: var(--surface-hover);
+  border-color: var(--line-strong);
+
+  transform: translateY(-1px);
+}
+
+.product-card > input:focus-visible + .product-card-content {
+  outline: 3px solid var(--orange-soft);
+  outline-offset: 2px;
 }
 
 .product-card > input:checked + .product-card-content {
-  border-color: #B8541F;
-  background: #F3E3D3;
+  border-color: var(--orange);
+  background: var(--orange-soft);
 }
 
-/* pequeno indicador no canto */
+
+/* product check */
 
 .product-check {
   position: absolute;
+
   top: 13px;
   right: 13px;
 
@@ -66,44 +791,49 @@
   display: grid;
   place-items: center;
 
-  border: 1px solid #D8D5C9;
+  background: transparent;
+
+  border: 1px solid var(--line);
   border-radius: 2px;
 
   color: transparent;
-  font-family: 'IBM Plex Mono', monospace;
+
+  font-family: var(--font-mono);
   font-size: 11px;
 
   transition:
-          background 120ms ease,
-          border-color 120ms ease,
-          color 120ms ease;
+          background var(--transition),
+          border-color var(--transition),
+          color var(--transition);
 }
 
 .product-card > input:checked ~ .product-check {
-  background: #B8541F;
-  border-color: #B8541F;
-  color: #EFEEE7;
+  background: var(--orange);
+  border-color: var(--orange);
+  color: var(--bg);
 }
 
-/* ícone */
+
+/* product icon */
 
 .product-icon {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
 
   display: grid;
   place-items: center;
 
-  background: #E4E9E5;
-  color: #4B6358;
+  background: var(--green-soft);
+  color: var(--green);
 
   border-radius: 3px;
 
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 15px;
 }
 
-/* informações */
+
+/* product information */
 
 .product-info {
   margin-top: 20px;
@@ -112,10 +842,12 @@
 .product-info h3 {
   margin: 0;
 
-  font-family: 'Fraunces', serif;
-  font-size: 19px;
+  color: var(--ink);
+
+  font-family: var(--font-display);
+  font-size: 20px;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 
 .stock {
@@ -125,38 +857,45 @@
 
   margin-top: 5px;
 
-  color: #6B7280;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
+  color: var(--muted);
+
+  font-family: var(--font-mono);
+  font-size: 10px;
 }
 
 .stock-dot {
   width: 6px;
   height: 6px;
 
+  flex: 0 0 auto;
+
   border-radius: 50%;
-  background: #4B6358;
+
+  background: var(--green);
 }
 
-/* ─────────────────────────────────────────
-   PURCHASE CONTROLS
-   ───────────────────────────────────────── */
+
+/* =========================================================
+   14. PURCHASE CONTROLS
+   ========================================================= */
 
 .purchase-summary {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+
+  gap: 24px;
+
   margin-top: 20px;
   padding-top: 18px;
 
-  border-top: 1px solid #1F2A2E;
-
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 24px;
+  border-top: 1px solid var(--ink);
 }
 
 .quantity-control {
   display: flex;
   align-items: center;
+
   gap: 18px;
 }
 
@@ -164,7 +903,7 @@
   display: block;
 
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .summary-description {
@@ -172,52 +911,136 @@
 
   margin-top: 2px;
 
-  color: #6B7280;
-  font-size: 12px;
+  color: var(--muted);
+
+  font-size: 11px;
 }
 
 .quantity-control input {
   width: 70px;
+
   padding: 10px;
 
-  border: 1px solid #D8D5C9;
+  background: var(--surface);
+
+  color: var(--ink);
+
+  border: 1px solid var(--line);
   border-radius: 3px;
 
-  background: #F7F6F1;
-  color: #1F2A2E;
+  outline: none;
 
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 14px;
   text-align: center;
+
+  transition: border-color var(--transition);
 }
 
 .quantity-control input:focus {
-  outline: none;
-  border-color: #1F2A2E;
+  border-color: var(--ink);
 }
 
 .buy-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-
   width: auto;
   min-width: 170px;
-
-  padding: 11px 18px;
 }
 
 .buy-btn span {
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 15px;
 }
 
-/* ─────────────────────────────────────────
-   RESPONSIVE
-   ───────────────────────────────────────── */
 
-@media (max-width: 680px) {
+/* =========================================================
+   15. VERIFY CODE
+   ========================================================= */
+
+#code {
+  font-family: var(--font-mono);
+  font-size: 21px;
+  font-weight: 500;
+  letter-spacing: 0.25em;
+  text-align: center;
+}
+
+.resend-form {
+  margin-top: 18px;
+  align-items: center;
+}
+
+
+/* =========================================================
+   16. RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 900px) {
+  .sidebar {
+    width: 190px;
+  }
+
+  .main {
+    width: calc(100% - 190px);
+    margin-left: 190px;
+    padding: 44px 36px 64px;
+  }
+}
+
+@media (max-width: 700px) {
+  .shell {
+    display: block;
+  }
+
+  .sidebar {
+    position: static;
+
+    width: 100%;
+
+    padding: 15px 16px;
+  }
+
+  .sidebar-brand {
+    margin-bottom: 14px;
+  }
+
+  .sidebar-brand .brand {
+    font-size: 22px;
+  }
+
+  .sidebar-nav {
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .sidebar-nav a {
+    flex: 0 0 auto;
+
+    border-left: 0;
+    border-bottom: 2px solid transparent;
+  }
+
+  .sidebar-nav a.active {
+    border-left: 0;
+    border-bottom-color: var(--orange);
+  }
+
+  .sidebar-footer {
+    display: none;
+  }
+
+  .main {
+    width: 100%;
+    min-height: auto;
+
+    margin-left: 0;
+
+    padding: 38px 20px 60px;
+  }
+
+  .page-head h1 {
+    font-size: 35px;
+  }
+
   .product-grid {
     grid-template-columns: 1fr;
   }
@@ -229,5 +1052,247 @@
 
   .buy-btn {
     width: 100%;
+  }
+
+  .ledger {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-card {
+    padding: 30px 24px;
+  }
+
+  .auth-card .brand {
+    font-size: 28px;
+  }
+
+  .page-sub {
+    margin-bottom: 28px;
+  }
+
+  .quantity-control {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+/* =========================================================
+   SIDEBAR / NAVIGATION
+   ========================================================= */
+
+.sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+
+  width: 228px;
+
+  display: flex;
+  flex-direction: column;
+
+  padding: 30px 18px;
+
+  background: var(--ink);
+  color: var(--bg);
+
+  border-right: 1px solid var(--ink);
+
+  z-index: 20;
+}
+
+
+/* BRAND */
+
+.sidebar .brand {
+  margin: 0 10px;
+
+  color: var(--bg);
+
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+
+.sidebar .brand-sub {
+  margin: 6px 10px 42px;
+
+  color: #9ca6a6;
+
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+
+/* NAVIGATION */
+
+.sidebar .nav {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.sidebar .nav a {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+
+  min-height: 42px;
+
+  padding: 10px 12px;
+
+  color: #aeb6b4;
+
+  border-left: 2px solid transparent;
+
+  font-size: 13px;
+  font-weight: 500;
+
+  text-decoration: none;
+
+  transition:
+          color 140ms ease,
+          background 140ms ease,
+          border-color 140ms ease;
+}
+
+.sidebar .nav a::before {
+  content: "·";
+
+  width: 17px;
+
+  color: #697573;
+
+  font-family: var(--font-mono);
+  font-size: 15px;
+}
+
+.sidebar .nav a:hover {
+  color: var(--bg);
+
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.sidebar .nav a:hover::before {
+  color: var(--orange);
+}
+
+.sidebar .nav a.active {
+  color: var(--bg);
+
+  background: rgba(255, 255, 255, 0.08);
+
+  border-left-color: var(--orange);
+}
+
+.sidebar .nav a.active::before {
+  content: "→";
+
+  color: var(--orange);
+}
+
+
+/* FOOTER */
+
+.sidebar-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  margin-top: auto;
+  padding: 18px 10px 0;
+
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-foot > span {
+  overflow: hidden;
+
+  color: #9ca6a6;
+
+  font-family: var(--font-mono);
+  font-size: 10px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-foot form {
+  margin: 0;
+}
+
+.sidebar-foot button {
+  padding: 0;
+
+  background: transparent;
+  color: #aeb6b4;
+
+  border: 0;
+
+  font-size: 12px;
+  font-weight: 500;
+
+  cursor: pointer;
+
+  transition: color 140ms ease;
+}
+
+.sidebar-foot button:hover {
+  color: var(--bg);
+}
+
+
+/* =========================================================
+   MOBILE SIDEBAR
+   ========================================================= */
+
+@media (max-width: 700px) {
+
+  .sidebar {
+    position: static;
+
+    width: 100%;
+
+    padding: 18px 16px;
+  }
+
+  .sidebar .brand {
+    margin-left: 8px;
+  }
+
+  .sidebar .brand-sub {
+    margin:
+            5px 8px 18px;
+  }
+
+  .sidebar .nav {
+    flex-direction: row;
+
+    overflow-x: auto;
+
+    gap: 4px;
+  }
+
+  .sidebar .nav a {
+    flex: 0 0 auto;
+
+    border-left: 0;
+    border-bottom: 2px solid transparent;
+  }
+
+  .sidebar .nav a.active {
+    border-left: 0;
+    border-bottom-color: var(--orange);
+  }
+
+  .sidebar-foot {
+    display: none;
   }
 }
