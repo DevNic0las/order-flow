@@ -3,7 +3,7 @@ spring:
     name: web
 
 gateway:
-  base-url: http://gateway:8080
+  base-url: ${GATEWAY_BASE_URL}
 
 email:
   admin:

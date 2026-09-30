@@ -10,6 +10,7 @@ COPY auth-security/pom.xml auth-security/
 COPY auth-security/src auth-security/src
 COPY gateway/pom.xml gateway/
 COPY payment-service/pom.xml payment-service/
+COPY web/pom.xml web/
 RUN mvn -pl inventory -am dependency:go-offline -q
 
 COPY inventory/src inventory/src
