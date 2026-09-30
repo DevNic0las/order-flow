@@ -17,10 +17,8 @@ public class RabbitMq {
   // --- Routing Keys ---
   public static final String RK_INVENTORY   = "rk.inventory";
   // --- Queues ---
-  public static final String INVENTORY_QUEUE    = "inventory.queue";
   public static final String ORDER_RESULT_QUEUE = "order.result.queue";
   public static final String ORDER_RESULT_DLQ = "order.result.dlq";
-  public static final String INVENTORY_DLQ = "inventory.dlq";
   // ---- Exchanges ----
 
   @Bean
@@ -41,14 +39,6 @@ public class RabbitMq {
   // ---- Queues com DLQ configurada ----
 
   @Bean
-  public Queue inventoryQueue() {
-    return QueueBuilder.durable(INVENTORY_QUEUE)
-            .withArgument("x-dead-letter-exchange", DLQ_EXCHANGE)
-            .withArgument("x-dead-letter-routing-key", INVENTORY_DLQ)
-            .build();
-  }
-
-  @Bean
   public Queue orderResultQueue() {
     return QueueBuilder.durable(ORDER_RESULT_QUEUE)
             .withArgument("x-dead-letter-exchange", DLQ_EXCHANGE)
@@ -59,11 +49,6 @@ public class RabbitMq {
   // ---- DLQs ----
 
   @Bean
-  public Queue inventoryDlq() {
-    return QueueBuilder.durable(INVENTORY_DLQ).build();
-  }
-
-  @Bean
   public Queue orderResultDlq() {
     return QueueBuilder.durable(ORDER_RESULT_DLQ).build();
   }
@@ -71,23 +56,9 @@ public class RabbitMq {
   // ---- Bindings ----
 
   @Bean
-  public Binding inventoryBinding() {
-    return BindingBuilder.bind(inventoryQueue())
-            .to(orderExchange())
-            .with(RK_INVENTORY);
-  }
-
-  @Bean
   public Binding orderResultBinding() {
     return BindingBuilder.bind(orderResultQueue())
             .to(orderResultExchange());
-  }
-
-  @Bean
-  public Binding inventoryDlqBinding() {
-    return BindingBuilder.bind(inventoryDlq())
-            .to(dlqExchange())
-            .with(INVENTORY_DLQ);
   }
 
   @Bean
