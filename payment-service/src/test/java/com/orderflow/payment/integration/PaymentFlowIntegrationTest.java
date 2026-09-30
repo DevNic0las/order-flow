@@ -24,7 +24,6 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
@@ -53,9 +52,7 @@ class PaymentFlowIntegrationTest {
   @Container
   static GenericContainer<?> rabbit =
       new GenericContainer<>(DockerImageName.parse("rabbitmq:3.13-management-alpine"))
-          .withExposedPorts(5672)
-          .waitingFor(Wait.forLogMessage(".*Server startup complete.*", 1))
-          .withStartupTimeout(Duration.ofMinutes(2));
+          .withExposedPorts(5672);
 
   @DynamicPropertySource
   static void configureProperties(DynamicPropertyRegistry registry) {
@@ -165,9 +162,7 @@ class PaymentFlowIntegrationTest {
   // ─────────────────────────── helpers ───────────────────────────
 
   private void declareQueueBoundToFanout(String queueName, String exchangeName) {
-    // autoDelete=false: a fila observer precisa sobreviver entre os dois
-    // receives do teste de duplicado (o consumidor é cancelado a cada receive).
-    org.springframework.amqp.core.Queue queue = new org.springframework.amqp.core.Queue(queueName, false, false, false);
+    org.springframework.amqp.core.Queue queue = new org.springframework.amqp.core.Queue(queueName, false, false, true);
     org.springframework.amqp.core.FanoutExchange exchange = new org.springframework.amqp.core.FanoutExchange(exchangeName);
     org.springframework.amqp.core.Binding binding =
         org.springframework.amqp.core.BindingBuilder.bind(queue).to(exchange);

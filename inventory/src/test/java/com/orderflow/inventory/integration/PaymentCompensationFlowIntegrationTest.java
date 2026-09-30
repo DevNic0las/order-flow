@@ -20,7 +20,6 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
@@ -49,9 +48,7 @@ class PaymentCompensationFlowIntegrationTest {
   @Container
   static GenericContainer<?> rabbit =
       new GenericContainer<>(DockerImageName.parse("rabbitmq:3.13-management-alpine"))
-          .withExposedPorts(5672)
-          .waitingFor(Wait.forLogMessage(".*Server startup complete.*", 1))
-          .withStartupTimeout(Duration.ofMinutes(2));
+          .withExposedPorts(5672);
 
   @DynamicPropertySource
   static void configureProperties(DynamicPropertyRegistry registry) {

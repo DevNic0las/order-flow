@@ -16,19 +16,13 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
-  // Fila consumida pelo inventory (evento de pedido criado vindo do order).
   public static final String INVENTORY_QUEUE = "inventory.queue";
-  public static final String INVENTORY_DLQ = "inventory.dlq";
-  // Exchange do order (direta) à qual a inventory.queue é vinculada.
-  public static final String ORDER_EXCHANGE = "order.exchange";
-  public static final String RK_INVENTORY = "rk.inventory";
-
   public static final String ORDER_RESULT_EXCHANGE = "order.result.exchange";
 
   // Payment exchange (novo): inventory publica pedido de pagamento aqui.
-  // A fila payment.queue é consumida pelo payment-service, que a declara.
   public static final String PAYMENT_EXCHANGE = "payment.exchange";
   public static final String RK_PAYMENT = "rk.payment";
+  public static final String PAYMENT_QUEUE = "payment.queue";
 
   // Compensação: payment devolve estoque; inventory consome.
   public static final String PAYMENT_COMPENSATION_EXCHANGE = "payment.compensation.exchange";
@@ -36,38 +30,6 @@ public class RabbitMQConfig {
 
   public static final String DLQ_EXCHANGE = "dlq.exchange";
   public static final String PAYMENT_COMPENSATION_DLQ = "payment.compensation.dlq";
-
-  @Bean
-  public DirectExchange orderExchange() {
-    return new DirectExchange(ORDER_EXCHANGE);
-  }
-
-  @Bean
-  public Queue inventoryQueue() {
-    return QueueBuilder.durable(INVENTORY_QUEUE)
-            .withArgument("x-dead-letter-exchange", DLQ_EXCHANGE)
-            .withArgument("x-dead-letter-routing-key", INVENTORY_DLQ)
-            .build();
-  }
-
-  @Bean
-  public Queue inventoryDlq() {
-    return QueueBuilder.durable(INVENTORY_DLQ).build();
-  }
-
-  @Bean
-  public Binding inventoryBinding() {
-    return BindingBuilder.bind(inventoryQueue())
-            .to(orderExchange())
-            .with(RK_INVENTORY);
-  }
-
-  @Bean
-  public Binding inventoryDlqBinding() {
-    return BindingBuilder.bind(inventoryDlq())
-            .to(dlqExchange())
-            .with(INVENTORY_DLQ);
-  }
 
   @Bean
   public DirectExchange paymentExchange() {
@@ -85,6 +47,14 @@ public class RabbitMQConfig {
   }
 
   @Bean
+  public Queue paymentQueue() {
+    return QueueBuilder.durable(PAYMENT_QUEUE)
+            .withArgument("x-dead-letter-exchange", DLQ_EXCHANGE)
+            .withArgument("x-dead-letter-routing-key", "payment.dlq")
+            .build();
+  }
+
+  @Bean
   public Queue paymentCompensationQueue() {
     return QueueBuilder.durable(PAYMENT_COMPENSATION_QUEUE)
             .withArgument("x-dead-letter-exchange", DLQ_EXCHANGE)
@@ -95,6 +65,13 @@ public class RabbitMQConfig {
   @Bean
   public Queue paymentCompensationDlq() {
     return QueueBuilder.durable(PAYMENT_COMPENSATION_DLQ).build();
+  }
+
+  @Bean
+  public Binding paymentBinding() {
+    return BindingBuilder.bind(paymentQueue())
+            .to(paymentExchange())
+            .with(RK_PAYMENT);
   }
 
   @Bean
