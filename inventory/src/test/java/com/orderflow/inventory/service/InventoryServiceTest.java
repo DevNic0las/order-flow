@@ -18,6 +18,7 @@ import com.orderflow.inventory.domain.InventoryIdempotencyKey;
 import com.orderflow.inventory.domain.ProcessedInventoryEvent;
 import com.orderflow.inventory.dto.InventoryProductDto;
 import com.orderflow.inventory.dto.InventoryResultEventDto;
+import com.orderflow.inventory.dto.PaymentRequestEventDto;
 import com.orderflow.inventory.exception.InvalidInventoryQuantityException;
 import com.orderflow.inventory.exception.InventoryNotFoundException;
 import com.orderflow.inventory.messaging.InventoryPublisher;
@@ -86,13 +87,18 @@ class InventoryServiceTest {
        assertEquals("Test Product", savedInventory.getProductName());
        assertEquals(7, savedInventory.getQuantity());
 
-       ArgumentCaptor<InventoryResultEventDto> eventCaptor = ArgumentCaptor.forClass(InventoryResultEventDto.class);
-       verify(inventoryPublisher).publishInventoryResult(eventCaptor.capture());
+       // Estoque reservado com sucesso: agora publica em payment.exchange (fluxo saga),
+       // não mais o resultado aprovado direto.
+       ArgumentCaptor<PaymentRequestEventDto> eventCaptor = ArgumentCaptor.forClass(PaymentRequestEventDto.class);
+       verify(inventoryPublisher).publishPaymentRequest(eventCaptor.capture());
+       verify(inventoryPublisher, never()).publishInventoryResult(any(InventoryResultEventDto.class));
 
-       InventoryResultEventDto event = eventCaptor.getValue();
+       PaymentRequestEventDto event = eventCaptor.getValue();
        assertEquals(99L, event.orderId());
-       assertTrue(event.approved());
+       assertEquals(1L, event.productId());
+       assertEquals(3, event.quantity());
        assertEquals("teste@gmail.com", event.to());
+       assertEquals(eventId, event.eventId());
    }
 
    @Test
