@@ -27,7 +27,7 @@ public class OutboxPublisher {
         this.objectMapper = objectMapper;
     }
 
-    @Scheduled(fixedDelay = 5000)
+    @Scheduled(fixedDelay = 1000)
     public void publishPendingEvents() {
         List<OutboxEvent> events = outboxEventRepository.findPendingEvents(OutboxEventStatus.PENDING, PageRequest.of(0, 20));
 

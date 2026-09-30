@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+import com.orderflow.order.IntegrationTestBase;
 import com.orderflow.order.domain.Order;
 import com.orderflow.order.domain.OrderStatus;
 import com.orderflow.order.dtos.OrderResultEventDto;
@@ -17,7 +18,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -25,15 +25,9 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-@SpringBootTest(properties = {
-    "spring.rabbitmq.listener.simple.auto-startup=false",
-    "spring.rabbitmq.listener.direct.auto-startup=false",
-    "spring.jpa.open-in-view=false",
-    "order.scheduling.enabled=false"
-})
 @Testcontainers
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-class OrderIdempotencyRaceIntegrationTest {
+class OrderIdempotencyRaceIntegrationTest extends IntegrationTestBase {
 
     @Container
     static PostgreSQLContainer<?> postgres =

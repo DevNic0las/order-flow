@@ -3,6 +3,7 @@ package com.orderflow.order.outbox;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import com.orderflow.order.IntegrationTestBase;
 import com.orderflow.order.dtos.OrderEventDto;
 import com.orderflow.order.dtos.OrderRequestDto;
 import com.orderflow.order.messaging.OrderPublisher;
@@ -10,7 +11,6 @@ import com.orderflow.order.repository.OrderRepository;
 import com.orderflow.order.service.OrderService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -21,13 +21,8 @@ import org.testcontainers.junit.jupiter.Container;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 
-@SpringBootTest(properties = {
-        "spring.rabbitmq.listener.simple.auto-startup=false",
-        "spring.rabbitmq.listener.direct.auto-startup=false",
-        "order.scheduling.enabled=false"
-})
 @Testcontainers
-class OutboxPublisherIntegrationTest {
+class OutboxPublisherIntegrationTest extends IntegrationTestBase {
 
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16");
