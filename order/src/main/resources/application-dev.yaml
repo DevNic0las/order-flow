@@ -29,7 +29,7 @@ spring:
     password: guest
 
 jwt:
-  secret: ${JWT_SECRET:orderflow-dev-secret-key-32bytes-123456}
+  secret: ${JWT_SECRET}
   duration: 3600000
 
 management:

@@ -8,3 +8,6 @@ server:
 
 gateway:
   base-url: ${GATEWAY_BASE_URL:http://localhost:8080}
+
+jwt:
+  secret: ${JWT_SECRET}
