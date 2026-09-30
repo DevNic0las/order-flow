@@ -23,7 +23,8 @@ import static org.mockito.Mockito.verify;
 
 @SpringBootTest(properties = {
         "spring.rabbitmq.listener.simple.auto-startup=false",
-        "spring.rabbitmq.listener.direct.auto-startup=false"
+        "spring.rabbitmq.listener.direct.auto-startup=false",
+        "order.scheduling.enabled=false"
 })
 @Testcontainers
 class OutboxPublisherIntegrationTest {
