@@ -1,4 +1,4 @@
-package com.orderflow.inventory.config;
+package com.orderflow.payment.config;
 
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
@@ -13,27 +13,44 @@ import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Declara exchanges/filas do payment.
+ *
+ * <p>Assim como o notification declara a própria fila e o binding à exchange
+ * compartilhada da qual consome, o payment declara a {@code payment.queue} e
+ * seu binding a {@code payment.exchange} — evita crash-loop caso o payment
+ * suba antes do inventory (produtor). As declarações são idempotentes e os
+ * argumentos (DLQ) batem com os que o inventory usa.
+ */
 @Configuration
 public class RabbitMQConfig {
 
-  public static final String INVENTORY_QUEUE = "inventory.queue";
-  public static final String ORDER_RESULT_EXCHANGE = "order.result.exchange";
-
-  // Payment exchange (novo): inventory publica pedido de pagamento aqui.
+  // ---- Exchanges ----
   public static final String PAYMENT_EXCHANGE = "payment.exchange";
-  public static final String RK_PAYMENT = "rk.payment";
-  public static final String PAYMENT_QUEUE = "payment.queue";
-
-  // Compensação: payment devolve estoque; inventory consome.
+  public static final String ORDER_RESULT_EXCHANGE = "order.result.exchange";
   public static final String PAYMENT_COMPENSATION_EXCHANGE = "payment.compensation.exchange";
-  public static final String PAYMENT_COMPENSATION_QUEUE = "payment.compensation.queue";
-
   public static final String DLQ_EXCHANGE = "dlq.exchange";
+
+  // ---- Routing keys ----
+  public static final String RK_PAYMENT = "rk.payment";
+  public static final String PAYMENT_DLQ = "payment.dlq";
   public static final String PAYMENT_COMPENSATION_DLQ = "payment.compensation.dlq";
+
+  // ---- Queues ----
+  public static final String PAYMENT_QUEUE = "payment.queue";
+  public static final String PAYMENT_COMPENSATION_QUEUE = "payment.compensation.queue";
+  public static final String PAYMENT_COMPENSATION_DLQ_QUEUE = "payment.compensation.dlq";
+
+  // ---- Exchanges (beans) ----
 
   @Bean
   public DirectExchange paymentExchange() {
     return new DirectExchange(PAYMENT_EXCHANGE);
+  }
+
+  @Bean
+  public FanoutExchange orderResultExchange() {
+    return new FanoutExchange(ORDER_RESULT_EXCHANGE);
   }
 
   @Bean
@@ -46,13 +63,17 @@ public class RabbitMQConfig {
     return new DirectExchange(DLQ_EXCHANGE);
   }
 
+  // ---- Consumed queue ----
+
   @Bean
   public Queue paymentQueue() {
     return QueueBuilder.durable(PAYMENT_QUEUE)
             .withArgument("x-dead-letter-exchange", DLQ_EXCHANGE)
-            .withArgument("x-dead-letter-routing-key", "payment.dlq")
+            .withArgument("x-dead-letter-routing-key", PAYMENT_DLQ)
             .build();
   }
+
+  // ---- Compensation queue (published here, also consumed by inventory) ----
 
   @Bean
   public Queue paymentCompensationQueue() {
@@ -62,10 +83,19 @@ public class RabbitMQConfig {
             .build();
   }
 
+  // ---- DLQs ----
+
+  @Bean
+  public Queue paymentDlq() {
+    return QueueBuilder.durable(PAYMENT_DLQ).build();
+  }
+
   @Bean
   public Queue paymentCompensationDlq() {
-    return QueueBuilder.durable(PAYMENT_COMPENSATION_DLQ).build();
+    return QueueBuilder.durable(PAYMENT_COMPENSATION_DLQ_QUEUE).build();
   }
+
+  // ---- Bindings ----
 
   @Bean
   public Binding paymentBinding() {
@@ -81,11 +111,20 @@ public class RabbitMQConfig {
   }
 
   @Bean
+  public Binding paymentDlqBinding() {
+    return BindingBuilder.bind(paymentDlq())
+            .to(dlqExchange())
+            .with(PAYMENT_DLQ);
+  }
+
+  @Bean
   public Binding paymentCompensationDlqBinding() {
     return BindingBuilder.bind(paymentCompensationDlq())
             .to(dlqExchange())
             .with(PAYMENT_COMPENSATION_DLQ);
   }
+
+  // ---- Serialização JSON ----
 
   @Bean
   public MessageConverter messageConverter() {
