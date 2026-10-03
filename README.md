@@ -20,7 +20,7 @@ Sistema de pedidos distribuído orientado a eventos, construído para demonstrar
 - **Consistência sob concorrência**: idempotência via `INSERT ... ON CONFLICT DO NOTHING`, optimistic locking (`@Version`) em `Order` e `Inventory`, e DLQ para mensagens não processáveis.
 
 ## Architecture
-
+![Arquitetura do Order Flow](docs/images/arquitetura.png)
 ```mermaid
 flowchart LR
   Client[Cliente / Browser] --> WEB[web :8085<br/>BFF — ponto de entrada do cliente]
@@ -66,6 +66,7 @@ flowchart LR
 Um único PostgreSQL com um schema por módulo e sem acesso cruzado entre schemas: mantém o isolamento de dados dos microsserviços com custo de infra baixo. Em produção real, o passo natural seria um banco por serviço.
 
 ## Main flow
+![Fluxo do pedido e saga](docs/images/fluxo-saga.png)
 
 1. O pedido entra pelo `web` (BFF), que chama o `gateway` com `POST /orders` e o header `Idempotency-Key`; o `order` grava `Order` como `PENDING` + `OutboxEvent` na mesma transação.
 2. O `OutboxPublisher` (agendado) publica o evento em `order.exchange` com routing key `rk.inventory`.
