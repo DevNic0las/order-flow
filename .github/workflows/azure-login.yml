@@ -1,50 +1,190 @@
-name: Deploy Payment
+name: Deploy Services
 
 on:
+  push:
+    branches:
+      - main
+
   workflow_dispatch:
+    inputs:
+      deploy_all:
+        description:
+        type: boolean
+        default: false
 
 permissions:
   id-token: write
   contents: read
 
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   ACR: orderflownicolas.azurecr.io
-  IMAGE_NAME: payment-service
+  ACR_NAME: orderflownicolas
+  RESOURCE_GROUP: rg-order-flow
 
 jobs:
-  deploy:
+
+  detect-changes:
     runs-on: ubuntu-latest
+
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      has_services: ${{ steps.matrix.outputs.has_services }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+
+      - name: Detectar mudanças
+        id: changes
+        if: github.event_name == 'push'
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            payment:
+              - 'payment-service/**'
+            inventory:
+              - 'inventory/**'
+            order:
+              - 'order/**'
+            notification:
+              - 'notification/**'
+            auth:
+              - 'auth-service/**'
+            gateway:
+              - 'gateway/**'
+            web:
+              - 'web/**'
+            auth-security:
+              - 'auth-security/**'
+            root:
+              - 'pom.xml'
+
+      - name: Montar matrix
+        id: matrix
+        shell: bash
+        env:
+          DEPLOY_ALL: ${{ inputs.deploy_all }}
+          PAYMENT: ${{ steps.changes.outputs.payment }}
+          INVENTORY: ${{ steps.changes.outputs.inventory }}
+          ORDER: ${{ steps.changes.outputs.order }}
+          NOTIFICATION: ${{ steps.changes.outputs.notification }}
+          AUTH: ${{ steps.changes.outputs.auth }}
+          GATEWAY: ${{ steps.changes.outputs.gateway }}
+          WEB: ${{ steps.changes.outputs.web }}
+          AUTH_SECURITY: ${{ steps.changes.outputs.auth-security }}
+          ROOT: ${{ steps.changes.outputs.root }}
+        run: |
+          ALL=(payment inventory order notification auth gateway web)
+          services=()
+
+          if [[ "$DEPLOY_ALL" == "true" ]]; then
+            services=("${ALL[@]}")
+          else
+            [[ "$PAYMENT" == "true" ]]      && services+=("payment")
+            [[ "$INVENTORY" == "true" ]]    && services+=("inventory")
+            [[ "$ORDER" == "true" ]]        && services+=("order")
+            [[ "$NOTIFICATION" == "true" ]] && services+=("notification")
+            [[ "$AUTH" == "true" ]]         && services+=("auth")
+            [[ "$GATEWAY" == "true" ]]      && services+=("gateway")
+            [[ "$WEB" == "true" ]]          && services+=("web")
+
+            # auth-security é usado por: order, web, inventory, auth e payment
+            if [[ "$AUTH_SECURITY" == "true" ]]; then
+              services+=(order web inventory auth payment)
+            fi
+
+            # pom.xml raiz pode afetar todos os módulos
+            if [[ "$ROOT" == "true" ]]; then
+              services+=("${ALL[@]}")
+            fi
+          fi
+
+          if [ ${#services[@]} -eq 0 ]; then
+            matrix='{"service":[]}'
+            has_services=false
+          else
+            # sort -u remove duplicados; -c gera JSON em UMA linha (obrigatório p/ GITHUB_OUTPUT)
+            matrix=$(printf '%s\n' "${services[@]}" | sort -u | jq -R . | jq -sc '{service: .}')
+            has_services=true
+          fi
+
+          echo "Matrix final: $matrix"
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          echo "has_services=$has_services" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_services == 'true'
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.detect-changes.outputs.matrix) }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Login na Azure
+      - name: Login Azure
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Login no ACR
-        run: |
-          az acr login --name orderflownicolas
+      - name: Login ACR
+        run: az acr login --name "$ACR_NAME"
 
-      - name: Build da imagem
+      - name: Definir configuração do serviço
+        id: config
+        shell: bash
+        env:
+          SERVICE: ${{ matrix.service }}
         run: |
-          docker build \
-            -f payment-service/Dockerfile \
-            -t $ACR/$IMAGE_NAME:${{ github.sha }} \
-            .
+          case "$SERVICE" in
+            payment)      app=payment;      image=payment-service ;;
+            inventory)    app=inventory;    image=inventory ;;
+            order)        app=order;        image=order ;;
+            notification) app=notification; image=notification ;;
+            auth)         app=auth;         image=auth-service ;;
+            gateway)      app=gateway;      image=gateway ;;
+            web)          app=web;          image=web ;;
+            *)
+              echo "Serviço desconhecido: $SERVICE"
+              exit 1
+              ;;
+          esac
 
-      - name: Push da imagem
-        run: |
-          docker push \
-            $ACR/$IMAGE_NAME:${{ github.sha }}
+          # A pasta do Dockerfile segue o nome da imagem (ex.: payment-service/Dockerfile)
+          echo "app=$app" >> "$GITHUB_OUTPUT"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          echo "dockerfile=$image/Dockerfile" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Buildx
+        uses: docker/setup-buildx-action@v3
+
+
+      - name: Build e push da imagem
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ steps.config.outputs.dockerfile }}
+          push: true
+          tags: ${{ env.ACR }}/${{ steps.config.outputs.image }}:${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
 
       - name: Deploy no Container App
         run: |
           az containerapp update \
-            --resource-group rg-order-flow \
-            --name payment \
-            --image $ACR/$IMAGE_NAME:${{ github.sha }}
+            --resource-group "$RESOURCE_GROUP" \
+            --name "${{ steps.config.outputs.app }}" \
+            --image "$ACR/${{ steps.config.outputs.image }}:${{ github.sha }}"
