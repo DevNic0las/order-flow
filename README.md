@@ -133,6 +133,6 @@ Sem `BREVO_API_KEY`, o `notification` sobe normalmente e os e-mails de desenvolv
 
 ## Author
 
-Nicolas Emanuel de Sena Cajueiro (Badniko) — [GitHub @DevNic0las](https://github.com/DevNic0las)
+Nicolas Emanuel de Sena Cajueiro — [GitHub @DevNic0las](https://github.com/DevNic0las)
 
 Licença MIT — veja [LICENSE](./LICENSE).
