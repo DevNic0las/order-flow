@@ -3,6 +3,7 @@ package com.orderflow.order.outbox;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import com.orderflow.order.IntegrationTestBase;
 import com.orderflow.order.dtos.OrderEventDto;
 import com.orderflow.order.dtos.OrderRequestDto;
 import com.orderflow.order.messaging.OrderPublisher;
@@ -10,39 +11,12 @@ import com.orderflow.order.repository.OrderRepository;
 import com.orderflow.order.service.OrderService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.junit.jupiter.Container;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 
-@SpringBootTest(properties = {
-        "spring.rabbitmq.listener.simple.auto-startup=false",
-        "spring.rabbitmq.listener.direct.auto-startup=false",
-        "order.scheduling.enabled=false"
-})
-@Testcontainers
-class OutboxPublisherIntegrationTest {
-
-    @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16");
-
-    @DynamicPropertySource
-    static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgres::getJdbcUrl);
-        registry.add("spring.datasource.username", postgres::getUsername);
-        registry.add("spring.datasource.password", postgres::getPassword);
-        registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
-        registry.add("spring.flyway.url", postgres::getJdbcUrl);
-        registry.add("spring.flyway.user", postgres::getUsername);
-        registry.add("spring.flyway.password", postgres::getPassword);
-        registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
-    }
+class OutboxPublisherIntegrationTest extends IntegrationTestBase {
 
     @Autowired
     private OrderService orderService;

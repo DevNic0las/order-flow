@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+import com.orderflow.order.IntegrationTestBase;
 import com.orderflow.order.domain.Order;
 import com.orderflow.order.domain.OrderStatus;
 import com.orderflow.order.dtos.OrderResultEventDto;
@@ -16,43 +17,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
-@SpringBootTest(properties = {
-    "spring.rabbitmq.listener.simple.auto-startup=false",
-    "spring.rabbitmq.listener.direct.auto-startup=false",
-    "spring.jpa.open-in-view=false",
-    "order.scheduling.enabled=false"
-})
-@Testcontainers
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-class OrderIdempotencyRaceIntegrationTest {
-
-    @Container
-    static PostgreSQLContainer<?> postgres =
-        new PostgreSQLContainer<>("postgres:16")
-            .withDatabaseName("order_test")
-            .withUsername("test")
-            .withPassword("test");
-
-    @DynamicPropertySource
-    static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgres::getJdbcUrl);
-        registry.add("spring.datasource.username", postgres::getUsername);
-        registry.add("spring.datasource.password", postgres::getPassword);
-        registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
-        registry.add("spring.flyway.url", postgres::getJdbcUrl);
-        registry.add("spring.flyway.user", postgres::getUsername);
-        registry.add("spring.flyway.password", postgres::getPassword);
-        registry.add("jwt.secret", () -> "test-secret");
-    }
+class OrderIdempotencyRaceIntegrationTest extends IntegrationTestBase {
 
     @Autowired
     private OrderRepository orderRepository;

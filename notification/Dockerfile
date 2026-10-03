@@ -9,6 +9,7 @@ COPY auth-service/pom.xml auth-service/
 COPY auth-security/pom.xml auth-security/
 COPY gateway/pom.xml gateway/
 COPY payment-service/pom.xml payment-service/
+COPY web/pom.xml web/
 RUN mvn -pl notification -am dependency:go-offline -q
 
 COPY notification/src notification/src
