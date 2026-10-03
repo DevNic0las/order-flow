@@ -3,16 +3,26 @@ global:
 
 scrape_configs:
   - job_name: 'order-service'
-    metrics_path: '/actuator/prometheus'
-    static_configs:
-      - targets: ['host.docker.internal:8080']
-
-  - job_name: 'inventory-service'
-    metrics_path: '/actuator/prometheus'
+    metrics_path: '/orders/actuator/prometheus'
     static_configs:
       - targets: ['host.docker.internal:8081']
+
+  - job_name: 'inventory-service'
+    metrics_path: '/inventory/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8082']
+
+  - job_name: 'payment-service'
+    metrics_path: '/payment/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8086']
 
   - job_name: 'notification-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['host.docker.internal:8082']
+      - targets: ['host.docker.internal:8083']
+
+  - job_name: 'auth-service'
+    metrics_path: '/auth/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8084']

@@ -2,7 +2,7 @@
 
 # Order Flow
 
-Event-driven distributed order system built to demonstrate **event-driven saga, outbox pattern, idempotency, compensation and DLQ** in Java 21 + Spring Boot on RabbitMQ. The architectural problem it tackles is consistency across autonomous services: each module owns its own Postgres schema and never calls another service synchronously in the business flow.
+Event-driven distributed order system built to demonstrate **choreographed saga, outbox pattern, idempotency, compensation and DLQ** in Java 21 + Spring Boot on RabbitMQ. The architectural problem it tackles is consistency across autonomous services: each module owns its own Postgres schema and never calls another service synchronously in the business flow.
 
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.5-brightgreen)
@@ -15,7 +15,7 @@ Event-driven distributed order system built to demonstrate **event-driven saga, 
 ## Why this project
 
 - **Asynchronous messaging with direct + fanout exchanges**: an order result is propagated to multiple consumers without coupling producer to consumers.
-- **Saga with compensation**: inventory is reserved, payment decides, and on rejection a compensation event restores the reserved stock — every step is idempotent.
+- **Choreographed saga with compensation**: no central orchestrator; each service reacts to events. Inventory is reserved, payment decides, and on rejection a compensation event restores the reserved stock — every step is idempotent.
 - **Outbox pattern**: `Order` and `OutboxEvent` are written in the same transaction; a scheduled publisher sends pending rows, eliminating the "order saved, event never published" gap.
 - **Consistency under concurrency**: idempotency via `INSERT ... ON CONFLICT DO NOTHING`, optimistic locking (`@Version`) on `Order` and `Inventory`, and DLQ for unrecoverable messages.
 
@@ -23,17 +23,18 @@ Event-driven distributed order system built to demonstrate **event-driven saga, 
 
 ```mermaid
 flowchart LR
-  Client[Client / Browser] --> GW[gateway :8080<br/>validates JWT]
+  Client[Client / Browser] --> WEB[web :8085<br/>BFF — only exposed entry]
+  WEB --> GW[gateway :8080<br/>internal, validates JWT]
+
   GW --> AUTH[auth-service :8084]
   GW --> ORD[order :8081]
   GW --> INV[inventory :8082]
-  GW --> WEB[web :8085<br/>BFF]
-  WEB --> GW
+  GW --> NOT[notification :8083]
 
   ORD <--> MQ[(RabbitMQ)]
   INV <--> MQ
   PAY[payment-service :8086] <--> MQ
-  NOT[notification :8083] <--> MQ
+  NOT <--> MQ
   AUTH --> MQ
 
   ORD --- DB1[(orders)]
@@ -45,18 +46,18 @@ flowchart LR
 
 | Module | Responsibility |
 |---|---|
-| `gateway` (:8080) | Single entry point (Spring Cloud Gateway/WebFlux); validates JWT signature/expiration before path-routing. |
+| `web` (:8085) | Thymeleaf session-based BFF, **the only entry exposed to the client**; stores the JWT in the `HttpSession` and calls the gateway as an internal client. |
+| `gateway` (:8080) | Single entry point for internal services (Spring Cloud Gateway/WebFlux); validates JWT signature/expiration before path-routing. |
 | `auth-service` (:8084) | Registration, login, email verification (with resend cooldown) and JWT issuance. |
 | `auth-security` | Shared JWT validation/role extraction library. No controller of its own. |
 | `order` (:8081) | Creates orders (outbox + `Idempotency-Key`), listens for the result and updates status. |
 | `inventory` (:8082) | Reserves/debits stock, starts payment, approves/rejects and compensates reservations. |
 | `payment-service` (:8086) | Consumes the payment request, authorizes (idempotent) and publishes result/compensation. |
 | `notification` (:8083) | Sends order-result and account-verification emails (idempotent consumer). |
-| `web` (:8085) | Thymeleaf session-based BFF; stores the JWT in the `HttpSession` and calls the gateway like any client. |
 
 ## Main flow
 
-1. Client creates the order (`POST /orders`) through the gateway; `order` persists `Order` as `PENDING` + `OutboxEvent` in the same transaction.
+1. The order enters through `web` (BFF), which calls the `gateway` with `POST /orders` and the `Idempotency-Key` header; `order` persists `Order` as `PENDING` + `OutboxEvent` in the same transaction.
 2. The scheduled `OutboxPublisher` publishes the event to `order.exchange` with routing key `rk.inventory`.
 3. `inventory` consumes it, checks idempotency and reserves stock with optimistic locking. Insufficient stock → publishes a rejection to `order.result.exchange`; reservation OK → publishes a payment request to `payment.exchange`.
 4. `payment-service` consumes it, checks idempotency and authorizes payment, publishing the result to `order.result.exchange` (fanout).
@@ -69,8 +70,10 @@ flowchart LR
 | Pattern | Where it is applied | Why |
 |---|---|---|
 | Outbox | `order` (`tb_outbox_events` + scheduled publisher) | Atomicity between saving the order and publishing the event. |
-| Idempotency (`ON CONFLICT DO NOTHING`) | `order`, `inventory`, `payment`, `notification` | Redelivery of the same message does not duplicate effects. |
-| Saga + compensation | `inventory` ↔ `payment` | Undo the stock reservation when payment rejects. |
+| Idempotency (`ON CONFLICT DO NOTHING`) | Consumers and `POST /orders` (`Idempotency-Key` header) | Redelivery of the same message (or client retry) does not duplicate effects. |
+| Processed-event tables | `tb_processed_order_result_events` (`order`), `tb_processed_inventory_events` + `tb_processed_payment_compensation_events` (`inventory`), `tb_processed_payment_events` (`payment`), `tb_processed_notification_events` (`notification`) | Record `event_id` atomically to guarantee idempotency. |
+| `POST /orders` Idempotency-Key | `order` (`tb_order_idempotency_keys`) + `Idempotency-Key` header | A client retry returns the same order instead of creating another. |
+| Choreographed saga + compensation | `inventory` ↔ `payment` | Undo the stock reservation when payment rejects, with no orchestrator. |
 | Optimistic locking (`@Version`) | `Order` and `Inventory` entities | Prevent lost updates on concurrent operations. |
 | DLQ + retry/backoff | every queue; retry configured on the `notification` listener | Avoid losing unrecoverable messages; absorb transient failures. |
 | Schema per module + Flyway | all modules | Data isolation and versioned migrations. |
@@ -94,7 +97,7 @@ flowchart LR
 
 - Every service exposes `health`, `info` and `prometheus` via Actuator/Micrometer. `monitoring/prometheus.yml` and `docker-compose-monitoring.yml` bring up Prometheus (`:9090`) and Grafana (`:3000`).
 - **CI** (`.github/workflows/ci.yml`): `mvn clean verify` on push/PR to `main` and `develop` (Java 21 Temurin, Maven cache).
-- **CD** (`.github/workflows/azure-login.yml`): on push to `main`, path-filter detects which modules changed, builds a matrix, builds/pushes the image to ACR and runs `az containerapp update` on Azure Container Apps. Credentials come from GitHub secrets.
+- **CD** (`.github/workflows/azure-login.yml`): on push to `main`, `dorny/paths-filter` detects which modules changed (changes to `auth-security` redeploy the services that consume it; changes to the root `pom.xml`, all of them) and builds a matrix; each changed service is built, has its image published to ACR with **tag equal to the commit SHA** (`:<github.sha>`) and gets `az containerapp update` on Azure Container Apps. Azure login uses **federated OIDC** (`azure/login` with `id-token: write` and the `AZURE_CLIENT_ID`/`AZURE_TENANT_ID`/`AZURE_SUBSCRIPTION_ID` secrets), with no long-lived credentials.
 
 ## Running locally
 
@@ -113,8 +116,8 @@ Without `BREVO_API_KEY`, `notification` still starts and development emails can 
 
 ## Project status / next steps
 
-- The payment decision (`PaymentService.authorize`) is deterministic and **always approves** in this version; the rejection/compensation branch is already implemented and tested, awaiting the real rule.
-- `monitoring/prometheus.yml` still points to old ports/services (order/inventory/notification on 8080/8081/8082); scrape targets must be aligned with the current ports and the remaining modules.
+- The payment is **simulated**: `PaymentService.authorize` is deterministic and **always approves** (no real PSP integration). The rejection/compensation branch is implemented and covered by tests (via override in the test), ready for the real rule.
+- `monitoring/prometheus.yml` scrapes the current services on the correct ports.
 - Concurrency/idempotency/outbox/compensation tests use Testcontainers.
 
 ## Author
