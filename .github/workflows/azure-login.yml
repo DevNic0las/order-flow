@@ -41,3 +41,10 @@ jobs:
         run: |
           docker push \
             $ACR/$IMAGE_NAME:${{ github.sha }}
+
+      - name: Deploy no Container App
+        run: |
+          az containerapp update \
+            --resource-group rg-order-flow \
+            --name payment \
+            --image $ACR/$IMAGE_NAME:${{ github.sha }}
