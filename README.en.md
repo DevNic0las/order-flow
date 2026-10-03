@@ -23,7 +23,7 @@ Event-driven distributed order system built to demonstrate **choreographed saga,
 
 ```mermaid
 flowchart LR
-  Client[Client / Browser] --> WEB[web :8085<br/>BFF — only exposed entry]
+  Client[Client / Browser] --> WEB[web :8085<br/>BFF — client entry point]
   WEB --> GW[gateway :8080<br/>internal, validates JWT]
 
   GW --> AUTH[auth-service :8084]
@@ -37,16 +37,24 @@ flowchart LR
   NOT <--> MQ
   AUTH --> MQ
 
-  ORD --- DB1[(orders)]
-  INV --- DB2[(inventory)]
-  PAY --- DB3[(payment)]
-  NOT --- DB4[(notification)]
-  AUTH --- DB5[(users + email_verification)]
+  subgraph PG["PostgreSQL: 1 database, 1 schema per module"]
+    DB_ORD[(orders)]
+    DB_INV[(inventory)]
+    DB_PAY[(payment)]
+    DB_NOT[(notification)]
+    DB_USR[(users)]
+  end
+
+  ORD --- DB_ORD
+  INV --- DB_INV
+  PAY --- DB_PAY
+  NOT --- DB_NOT
+  AUTH --- DB_USR
 ```
 
 | Module | Responsibility |
 |---|---|
-| `web` (:8085) | Thymeleaf session-based BFF, **the only entry exposed to the client**; stores the JWT in the `HttpSession` and calls the gateway as an internal client. |
+| `web` (:8085) | Thymeleaf session-based BFF, **the client entry point; the gateway is internal**; stores the JWT in the `HttpSession` and calls the gateway as an internal client. |
 | `gateway` (:8080) | Single entry point for internal services (Spring Cloud Gateway/WebFlux); validates JWT signature/expiration before path-routing. |
 | `auth-service` (:8084) | Registration, login, email verification (with resend cooldown) and JWT issuance. |
 | `auth-security` | Shared JWT validation/role extraction library. No controller of its own. |
@@ -54,6 +62,8 @@ flowchart LR
 | `inventory` (:8082) | Reserves/debits stock, starts payment, approves/rejects and compensates reservations. |
 | `payment-service` (:8086) | Consumes the payment request, authorizes (idempotent) and publishes result/compensation. |
 | `notification` (:8083) | Sends order-result and account-verification emails (idempotent consumer). |
+
+A single PostgreSQL with one schema per module and no cross-schema access: it keeps microservice data isolation at low infrastructure cost. In a real production setup, the natural next step would be one database per service.
 
 ## Main flow
 
@@ -70,7 +80,7 @@ flowchart LR
 | Pattern | Where it is applied | Why |
 |---|---|---|
 | Outbox | `order` (`tb_outbox_events` + scheduled publisher) | Atomicity between saving the order and publishing the event. |
-| Idempotency (`ON CONFLICT DO NOTHING`) | Consumers and `POST /orders` (`Idempotency-Key` header) | Redelivery of the same message (or client retry) does not duplicate effects. |
+| Idempotency (`ON CONFLICT DO NOTHING`) | Event consumers (`order`, `inventory`, `payment`, `notification`) | Redelivery of the same message does not duplicate effects. |
 | Processed-event tables | `tb_processed_order_result_events` (`order`), `tb_processed_inventory_events` + `tb_processed_payment_compensation_events` (`inventory`), `tb_processed_payment_events` (`payment`), `tb_processed_notification_events` (`notification`) | Record `event_id` atomically to guarantee idempotency. |
 | `POST /orders` Idempotency-Key | `order` (`tb_order_idempotency_keys`) + `Idempotency-Key` header | A client retry returns the same order instead of creating another. |
 | Choreographed saga + compensation | `inventory` ↔ `payment` | Undo the stock reservation when payment rejects, with no orchestrator. |
@@ -95,9 +105,9 @@ flowchart LR
 
 ## Observability & CI/CD
 
-- Every service exposes `health`, `info` and `prometheus` via Actuator/Micrometer. `monitoring/prometheus.yml` and `docker-compose-monitoring.yml` bring up Prometheus (`:9090`) and Grafana (`:3000`).
+- Every service exposes `health`, `info` and `prometheus` via Actuator/Micrometer. `monitoring/prometheus.yml` scrapes `order` (:8081), `inventory` (:8082), `payment-service` (:8086), `notification` (:8083), `auth-service` (:8084) and `gateway` (:8080) on the correct context paths; `docker-compose-monitoring.yml` brings up Prometheus (`:9090`) and Grafana (`:3000`).
 - **CI** (`.github/workflows/ci.yml`): `mvn clean verify` on push/PR to `main` and `develop` (Java 21 Temurin, Maven cache).
-- **CD** (`.github/workflows/azure-login.yml`): on push to `main`, `dorny/paths-filter` detects which modules changed (changes to `auth-security` redeploy the services that consume it; changes to the root `pom.xml`, all of them) and builds a matrix; each changed service is built, has its image published to ACR with **tag equal to the commit SHA** (`:<github.sha>`) and gets `az containerapp update` on Azure Container Apps. Azure login uses **federated OIDC** (`azure/login` with `id-token: write` and the `AZURE_CLIENT_ID`/`AZURE_TENANT_ID`/`AZURE_SUBSCRIPTION_ID` secrets), with no long-lived credentials.
+- **CD** (`.github/workflows/deploy.yml`): on push to `main`, `dorny/paths-filter` detects which modules changed (changes to `auth-security` redeploy the services that consume it; changes to the root `pom.xml`, all of them) and builds a matrix; each changed service is built, has its image published to ACR with **tag equal to the commit SHA** (`:<github.sha>`) and gets `az containerapp update` on Azure Container Apps. Azure login uses **federated OIDC** (`azure/login` with `id-token: write` and the `AZURE_CLIENT_ID`/`AZURE_TENANT_ID`/`AZURE_SUBSCRIPTION_ID` secrets), with no long-lived credentials.
 
 ## Running locally
 
@@ -117,7 +127,6 @@ Without `BREVO_API_KEY`, `notification` still starts and development emails can 
 ## Project status / next steps
 
 - The payment is **simulated**: `PaymentService.authorize` is deterministic and **always approves** (no real PSP integration). The rejection/compensation branch is implemented and covered by tests (via override in the test), ready for the real rule.
-- `monitoring/prometheus.yml` scrapes the current services on the correct ports.
 - Concurrency/idempotency/outbox/compensation tests use Testcontainers.
 
 ## Author
