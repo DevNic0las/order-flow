@@ -105,7 +105,7 @@ Um único PostgreSQL com um schema por módulo e sem acesso cruzado entre schema
 
 ## Observability & CI/CD
 
-- Cada serviço expõe `health`, `info` e `prometheus` via Actuator/Micrometer. `monitoring/prometheus.yml` faz scrape de `order` (:8081), `inventory` (:8082), `payment-service` (:8086), `notification` (:8083), `auth-service` (:8084) e `gateway` (:8080), com os context-paths corretos; `docker-compose-monitoring.yml` sobe Prometheus (`:9090`) e Grafana (`:3000`).
+- **Observability (local, docker compose)**: cada serviço expõe `health`, `info` e `prometheus` via Actuator/Micrometer. `monitoring/prometheus.yml` faz scrape de `order` (:8081), `inventory` (:8082), `payment-service` (:8086), `notification` (:8083), `auth-service` (:8084) e `gateway` (:8080), com os context-paths corretos; `docker-compose-monitoring.yml` sobe Prometheus (`:9090`) e Grafana (`:3000`). Prometheus e Grafana rodam apenas localmente (docker compose); não estão implantados no Azure Container Apps.
 - **CI** (`.github/workflows/ci.yml`): `mvn clean verify` em push/PR para `main` e `develop` (Java 21 Temurin, cache Maven).
 - **CD** (`.github/workflows/deploy.yml`): em push para `main`, `dorny/paths-filter` detecta quais módulos mudaram (mudanças em `auth-security` reimplantam os serviços que a consomem; no `pom.xml` raiz, todos) e monta uma matrix; cada serviço alterado é buildado, tem a imagem publicada no ACR com **tag igual ao SHA do commit** (`:<github.sha>`) e recebe `az containerapp update` no Azure Container Apps. O login no Azure usa **OIDC federado** (`azure/login` com `id-token: write` e os secrets `AZURE_CLIENT_ID`/`AZURE_TENANT_ID`/`AZURE_SUBSCRIPTION_ID`), sem credenciais de longa duração.
 
@@ -120,13 +120,14 @@ docker compose up -d
 
 - Gateway: `http://localhost:8080` · Web/BFF: `http://localhost:8085`
 - RabbitMQ management: `http://localhost:15672` · Mailpit (e-mails de dev): `http://localhost:8025`
-- Observabilidade (opcional): `docker compose -f docker-compose-monitoring.yml up -d`
+- **Observabilidade local (opcional)**, apenas em ambiente local: `docker compose -f docker-compose-monitoring.yml up -d` (Prometheus `:9090`, Grafana `:3000`).
 
 Sem `BREVO_API_KEY`, o `notification` sobe normalmente e os e-mails de desenvolvimento podem ser vistos no Mailpit.
 
 ## Project status / next steps
 
 - O pagamento é **simulado**: `PaymentService.authorize` é determinístico e **sempre aprova** (sem integração com PSP real). O ramo de recusa/compensação está implementado e coberto por testes (via override no teste), pronto para receber a regra real.
+- Observabilidade em produção (Prometheus/Grafana no Azure) ainda não implementada.
 - Testes de concorrência/idempotência/outbox/compensação usam Testcontainers.
 
 ## Author
