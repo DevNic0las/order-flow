@@ -54,7 +54,7 @@ flowchart LR
 
 | Module | Responsibility |
 |---|---|
-| `web` (:8085) | Thymeleaf session-based BFF, **the client entry point; the gateway is internal**; stores the JWT in the `HttpSession` and calls the gateway as an internal client. |
+| `web` (:8085) | Thymeleaf session-based BFF; the only service with external ingress; stores the JWT in the `HttpSession` and calls the gateway. |
 | `gateway` (:8080) | Single entry point for internal services (Spring Cloud Gateway/WebFlux); validates JWT signature/expiration before path-routing. |
 | `auth-service` (:8084) | Registration, login, email verification (with resend cooldown) and JWT issuance. |
 | `auth-security` | Shared JWT validation/role extraction library. No controller of its own. |
@@ -64,6 +64,8 @@ flowchart LR
 | `notification` (:8083) | Sends order-result and account-verification emails (idempotent consumer). |
 
 A single PostgreSQL with one schema per module and no cross-schema access: it keeps microservice data isolation at low infrastructure cost. In a real production setup, the natural next step would be one database per service.
+
+On Azure Container Apps, only web (the BFF) has external ingress; the gateway and the remaining services are internal.
 
 ## Main flow
 
@@ -123,6 +125,14 @@ docker compose up -d
 - **Local observability (optional)**, local environment only: `docker compose -f docker-compose-monitoring.yml up -d` (Prometheus `:9090`, Grafana `:3000`).
 
 Without `BREVO_API_KEY`, `notification` still starts and development emails can be inspected in Mailpit.
+
+## Known limitations
+
+- **Cold start**: JVM services (Spring Boot) on Azure Container Apps; if a service scales to zero, the first request waits for the JVM to boot. In production the services keep at least 1 replica.
+- Consumers (`inventory`, `payment`, `notification`) have no queue-based scaling rule (KEDA).
+- Observability (Prometheus/Grafana) is local only, in docker compose.
+- A single PostgreSQL with one schema per module; the natural next step would be one database per service.
+- Simulated payment (always approves); the rejection/compensation flow is implemented and tested.
 
 ## Project status / next steps
 

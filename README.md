@@ -54,7 +54,7 @@ flowchart LR
 
 | Módulo | Responsabilidade |
 |---|---|
-| `web` (:8085) | BFF Thymeleaf com sessão, **ponto de entrada do cliente; o gateway é interno**; guarda o JWT no `HttpSession` e chama o gateway como um cliente interno. |
+| `web` (:8085) | BFF Thymeleaf com sessão; único serviço com ingress externo; guarda o JWT no `HttpSession` e chama o gateway. |
 | `gateway` (:8080) | Entrada única dos serviços internos (Spring Cloud Gateway/WebFlux); valida assinatura/expiração do JWT antes de rotear por path. |
 | `auth-service` (:8084) | Registro, login, verificação de e-mail (com cooldown de reenvio) e emissão de JWT. |
 | `auth-security` | Lib compartilhada de validação de JWT e extração de roles. Sem controller próprio. |
@@ -64,6 +64,8 @@ flowchart LR
 | `notification` (:8083) | Envia e-mail de resultado do pedido e de verificação de conta (consumidor idempotente). |
 
 Um único PostgreSQL com um schema por módulo e sem acesso cruzado entre schemas: mantém o isolamento de dados dos microsserviços com custo de infra baixo. Em produção real, o passo natural seria um banco por serviço.
+
+No Azure Container Apps, apenas o web (BFF) tem ingress externo; o gateway e os demais serviços têm ingress interno.
 
 ## Main flow
 ![Fluxo do pedido e saga](docs/fluxo-saga.png)
@@ -124,6 +126,14 @@ docker compose up -d
 - **Observabilidade local (opcional)**, apenas em ambiente local: `docker compose -f docker-compose-monitoring.yml up -d` (Prometheus `:9090`, Grafana `:3000`).
 
 Sem `BREVO_API_KEY`, o `notification` sobe normalmente e os e-mails de desenvolvimento podem ser vistos no Mailpit.
+
+## Limitações conhecidas
+
+- **Cold start**: serviços JVM (Spring Boot) no Azure Container Apps; se um serviço escalar a zero, a primeira requisição espera a JVM subir. Em produção os serviços ficam com no mínimo 1 réplica.
+- Consumidores (`inventory`, `payment`, `notification`) sem regra de escala por fila (KEDA).
+- Observabilidade (Prometheus/Grafana) apenas local, em docker compose.
+- Um único PostgreSQL com um schema por módulo; o próximo passo natural seria um banco por serviço.
+- Pagamento simulado (sempre aprova); o fluxo de recusa/compensação está implementado e testado.
 
 ## Project status / next steps
 
