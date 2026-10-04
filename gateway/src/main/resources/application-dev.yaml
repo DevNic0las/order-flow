@@ -5,31 +5,34 @@ spring:
     gateway:
       routes:
         - id: order-service
-          uri: http://localhost:8081
+          uri: http://order-service:8081
           predicates:
             - Path=/orders/**
         - id: inventory-service
-          uri: http://localhost:8082
+          uri: http://inventory-service:8082
           predicates:
             - Path=/inventory/**
         - id: notification-service
-          uri: http://localhost:8083
+          uri: http://notification-service:8083
           predicates:
             - Path=/notifications/**
         - id: auth-service
-          uri: http://localhost:8084
+          uri: http://auth-service:8084
           predicates:
             - Path=/auth/**
         - id: web
-          uri: http://localhost:8085
+          uri: http://web:8085
           predicates:
             - Path=/buy,/login,/register,/verifycode,/resend-code,/dashboard,/catalog,/css/**,/logout
 
 management:
+  health:
+    rabbit:
+      enabled: false
   endpoints:
     web:
       exposure:
-        include: gateway
+        include: gateway,health,info,prometheus
 
 logging:
   level:

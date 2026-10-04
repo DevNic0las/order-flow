@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   prometheus:
     image: prom/prometheus:latest
@@ -8,6 +10,8 @@ services:
       - "9090:9090"
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    networks:
+      - orderflow
 
   grafana:
     image: grafana/grafana:latest
@@ -15,6 +19,14 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
     depends_on:
       - prometheus
+    networks:
+      - orderflow
+
+networks:
+  orderflow:
+    external: true
+    name: order-flow_default

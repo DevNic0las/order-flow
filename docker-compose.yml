@@ -6,7 +6,7 @@ services:
     container_name: orderflow-rabbitmq
     ports:
       - "5672:5672"
-      - "15672:15672"   # management UI
+      - "15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
@@ -27,7 +27,12 @@ services:
       POSTGRES_DB: orderflow
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql  # cria schemas separados
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orderflow -d orderflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   order-service:
     build:
@@ -37,19 +42,25 @@ services:
     ports:
       - "8081:8081"
     environment:
-      SPRING_PROFILES_ACTIVE: prod
+      SPRING_PROFILES_ACTIVE: dev
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_ADDRESSES: amqp://guest:guest@rabbitmq:5672
       SPRING_RABBITMQ_SSL_ENABLED: "false"
-      DATABASE_URL: jdbc:postgresql://postgres:5432/orderflow?currentSchema=orders
-      DATABASE_USER: orderflow
-      DATABASE_PASSWORD: orderflow
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/orderflow?currentSchema=orders
+      SPRING_DATASOURCE_USERNAME: orderflow
+      SPRING_DATASOURCE_PASSWORD: orderflow
       JWT_SECRET: ${JWT_SECRET}
     depends_on:
       rabbitmq:
         condition: service_healthy
       postgres:
-        condition: service_started
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8081/orders/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
 
   inventory-service:
     build:
@@ -59,19 +70,25 @@ services:
     ports:
       - "8082:8082"
     environment:
-      SPRING_PROFILES_ACTIVE: prod
+      SPRING_PROFILES_ACTIVE: dev
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_ADDRESSES: amqp://guest:guest@rabbitmq:5672
       SPRING_RABBITMQ_SSL_ENABLED: "false"
-      DATABASE_URL: jdbc:postgresql://postgres:5432/orderflow?currentSchema=inventory
-      DATABASE_USER: orderflow
-      DATABASE_PASSWORD: orderflow
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/orderflow?currentSchema=inventory
+      SPRING_DATASOURCE_USERNAME: orderflow
+      SPRING_DATASOURCE_PASSWORD: orderflow
       JWT_SECRET: ${JWT_SECRET}
     depends_on:
       rabbitmq:
         condition: service_healthy
       postgres:
-        condition: service_started
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8082/inventory/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
 
   notification-service:
     build:
@@ -81,13 +98,15 @@ services:
     ports:
       - "8083:8083"
     environment:
-      SPRING_PROFILES_ACTIVE: prod
+      SPRING_PROFILES_ACTIVE: dev
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_ADDRESSES: amqp://guest:guest@rabbitmq:5672
       SPRING_RABBITMQ_SSL_ENABLED: "false"
-      DATABASE_URL: jdbc:postgresql://postgres:5432/orderflow?currentSchema=notification
-      DATABASE_USER: orderflow
-      DATABASE_PASSWORD: orderflow
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/orderflow?currentSchema=notification
+      SPRING_DATASOURCE_USERNAME: orderflow
+      SPRING_DATASOURCE_PASSWORD: orderflow
+      SPRING_MAIL_HOST: mailpit
+      SPRING_MAIL_PORT: 1025
       BREVO_API_KEY: ${BREVO_API_KEY:-}
       BREVO_SENDER_EMAIL: ${BREVO_SENDER_EMAIL:-noreply@orderflow.com}
       BREVO_SENDER_NAME: ${BREVO_SENDER_NAME:-orderflow}
@@ -96,7 +115,15 @@ services:
       rabbitmq:
         condition: service_healthy
       postgres:
+        condition: service_healthy
+      mailpit:
         condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8083/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
 
   auth-service:
     build:
@@ -106,36 +133,25 @@ services:
     ports:
       - "8084:8084"
     environment:
-      SPRING_PROFILES_ACTIVE: prod
+      SPRING_PROFILES_ACTIVE: dev
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_ADDRESSES: amqp://guest:guest@rabbitmq:5672
       SPRING_RABBITMQ_SSL_ENABLED: "false"
-      DATABASE_URL: jdbc:postgresql://postgres:5432/orderflow?currentSchema=users
-      DATABASE_USER: orderflow
-      DATABASE_PASSWORD: orderflow
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/orderflow?currentSchema=users
+      SPRING_DATASOURCE_USERNAME: orderflow
+      SPRING_DATASOURCE_PASSWORD: orderflow
       JWT_SECRET: ${JWT_SECRET}
     depends_on:
       rabbitmq:
         condition: service_healthy
       postgres:
-        condition: service_started
-
-  gateway:
-    build:
-      context: .
-      dockerfile: gateway/Dockerfile
-    container_name: orderflow-gateway
-    ports:
-      - "8080:8080"
-    environment:
-      SPRING_PROFILES_ACTIVE: prod
-      JWT_SECRET: ${JWT_SECRET}
-    depends_on:
-      - order-service
-      - inventory-service
-      - notification-service
-      - auth-service
-      - payment-service
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8084/auth/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
 
   payment-service:
     build:
@@ -145,19 +161,53 @@ services:
     ports:
       - "8086:8086"
     environment:
-      SPRING_PROFILES_ACTIVE: prod
+      SPRING_PROFILES_ACTIVE: dev
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_ADDRESSES: amqp://guest:guest@rabbitmq:5672
       SPRING_RABBITMQ_SSL_ENABLED: "false"
-      DATABASE_URL: jdbc:postgresql://postgres:5432/orderflow?currentSchema=payment
-      DATABASE_USER: orderflow
-      DATABASE_PASSWORD: orderflow
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/orderflow?currentSchema=payment
+      SPRING_DATASOURCE_USERNAME: orderflow
+      SPRING_DATASOURCE_PASSWORD: orderflow
       JWT_SECRET: ${JWT_SECRET}
     depends_on:
       rabbitmq:
         condition: service_healthy
       postgres:
-        condition: service_started
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8086/payment/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    container_name: orderflow-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      order-service:
+        condition: service_healthy
+      inventory-service:
+        condition: service_healthy
+      notification-service:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+      payment-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
 
   web:
     build:
@@ -167,10 +217,13 @@ services:
     ports:
       - "8085:8085"
     environment:
-      SPRING_PROFILES_ACTIVE: prod
+      SPRING_PROFILES_ACTIVE: dev
       GATEWAY_BASE_URL: http://gateway:8080
+      JWT_SECRET: ${JWT_SECRET}
+      EMAIL_ADMIN_PROD: ${EMAIL_ADMIN_PROD}
     depends_on:
-      - gateway
+      gateway:
+        condition: service_healthy
 
   mailpit:
     image: axllent/mailpit:latest
@@ -178,6 +231,12 @@ services:
     ports:
       - "1025:1025"
       - "8025:8025"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8025/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   postgres_data:
   grafana_data:

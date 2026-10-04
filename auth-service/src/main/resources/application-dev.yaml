@@ -31,6 +31,14 @@ jwt:
   secret: ${JWT_SECRET}
   duration: 3600000
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  metrics:
+    tags:
+      application: auth-service
 
 logging:
   level:

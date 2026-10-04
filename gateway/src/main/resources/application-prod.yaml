@@ -31,7 +31,10 @@ spring:
             - Path=/buy,/login,/register,/verifycode,/resend-code,/dashboard,/catalog,/css/**,/logout
 
 management:
+  health:
+    rabbit:
+      enabled: false
   endpoints:
     web:
       exposure:
-        include: gateway,health,info
+        include: gateway,health,info,prometheus

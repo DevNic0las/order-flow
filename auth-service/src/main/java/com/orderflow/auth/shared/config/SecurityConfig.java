@@ -43,7 +43,9 @@ public class SecurityConfig{
                             "/register",
                             "/verifycode",
                             "/resend-code",
-                            "/error"
+                            "/actuator/health",
+                            "/error",
+                            "/actuator/prometheus"
                     ).permitAll()
                     .anyRequest().authenticated()
             )
