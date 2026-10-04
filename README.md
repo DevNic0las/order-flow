@@ -2,6 +2,13 @@
 
 # Order Flow
 
+
+## 🌐 Live Demo
+
+[![Acesse a Aplicação](https://shields.io)](https://sua-url-aqui.com)
+
+
+
 Sistema de pedidos distribuído orientado a eventos, construído para demonstrar **saga coreografada, outbox pattern, idempotência, compensação e DLQ** em Java 21 + Spring Boot sobre RabbitMQ. O problema de arquitetura que ele ataca é a consistência entre serviços autônomos: cada módulo tem seu próprio schema Postgres e nunca chama o outro de forma síncrona no fluxo de negócio.
 
 ![Java](https://img.shields.io/badge/Java-21-orange)
